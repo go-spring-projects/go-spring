@@ -21,7 +21,6 @@ import (
 	"reflect"
 
 	"github.com/antonmedv/expr"
-	"github.com/limpo1989/go-spring/utils"
 )
 
 var validators = map[string]Validator{
@@ -56,11 +55,11 @@ type exprValidator struct{}
 func (d exprValidator) Field(tag string, i interface{}) error {
 	r, err := expr.Eval(tag, map[string]interface{}{"$": i})
 	if err != nil {
-		return utils.Wrapf(err, utils.FileLine(), "eval %q returns error", tag)
+		return fmt.Errorf("eval %q returns: %w", tag, err)
 	}
 	b, ok := r.(bool)
 	if !ok {
-		return utils.Wrapf(err, utils.FileLine(), "eval %q doesn't return bool", tag)
+		return fmt.Errorf("eval %q doesn't return bool", tag)
 	}
 
 	if !b {

@@ -21,7 +21,7 @@ import (
 	"strings"
 )
 
-const Website = "https://go-spring.com/"
+const Website = "https://github.com/limpo1989/go-spring"
 
 var Version = "go-spring"
 

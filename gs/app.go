@@ -19,14 +19,13 @@ package gs
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"syscall"
+	"unicode/utf8"
 
 	"github.com/limpo1989/go-spring/conf"
 	"github.com/limpo1989/go-spring/gs/arg"
@@ -48,37 +47,22 @@ type AppEvent interface {
 	OnAppStop(ctx context.Context) // 应用停止的事件
 }
 
-type tempApp struct {
-	banner string
-}
-
 // App 应用
 type App struct {
-	*tempApp
+	logger    *log.Logger
+	container *container
+	exitChan  chan struct{}
 
-	logger *log.Logger
-
-	c *container
-	b *bootstrap
-
-	exitChan chan struct{}
-
-	Events  []AppEvent  `autowire:"${application-event.collection:=*?}"`
-	Runners []AppRunner `autowire:"${command-line-runner.collection:=*?}"`
+	Events  []AppEvent  `autowire:"*?"`
+	Runners []AppRunner `autowire:"*?"`
 }
 
 // NewApp application 的构造函数
 func NewApp() *App {
 	return &App{
-		c:        New().(*container),
-		tempApp:  &tempApp{},
-		exitChan: make(chan struct{}),
+		container: New().(*container),
+		exitChan:  make(chan struct{}),
 	}
-}
-
-// Banner 自定义 banner 字符串。
-func (app *App) Banner(banner string) {
-	app.banner = banner
 }
 
 func (app *App) Run() error {
@@ -90,7 +74,7 @@ func (app *App) Run() error {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		sig := <-ch
-		app.ShutDown(fmt.Sprintf("signal %v", sig))
+		app.Shutdown(fmt.Sprintf("signal %v", sig))
 	}()
 
 	if err := app.start(); err != nil {
@@ -99,77 +83,49 @@ func (app *App) Run() error {
 
 	<-app.exitChan
 
-	if app.b != nil {
-		app.b.c.Close()
-	}
-
-	app.c.Close()
+	app.container.Close()
 	app.logger.Info("application exited")
 	return nil
 }
 
 func (app *App) clear() {
-	app.c.clear()
-	if app.b != nil {
-		app.b.clear()
-	}
-	app.tempApp = nil
+	app.container.clear()
 }
 
 func (app *App) start() error {
 
-	e := &configuration{
-		p:               conf.New(),
-		resourceLocator: new(defaultResourceLocator),
-	}
+	e := NewConfiguration(new(FileResourceLocator))
 
-	if err := e.prepare(); err != nil {
+	if err := e.Load(app.container.initProperties); nil != err {
 		return err
 	}
 
-	showBanner, _ := strconv.ParseBool(e.p.Get(SpringBannerVisible))
-	if showBanner {
-		app.printBanner(app.getBanner(e))
-	}
-
-	if app.b != nil {
-		if err := app.b.start(e); err != nil {
-			return err
-		}
-	}
-
-	if err := app.loadProperties(e); err != nil {
-		return err
-	}
-
-	// 保存从环境变量和命令行解析的属性
-	for _, k := range e.p.Keys() {
-		app.c.initProperties.Set(k, e.p.Get(k))
+	if showBanner, _ := strconv.ParseBool(app.container.initProperties.Get(SpringBannerVisible)); showBanner {
+		app.printBanner(app.getBanner(app.container.initProperties))
 	}
 
 	// 初始化属性
-	if err := app.c.p.Refresh(app.c.initProperties); nil != err {
+	if err := app.container.p.Refresh(app.container.initProperties); nil != err {
 		return err
 	}
 
-	if err := app.c.refresh(false); err != nil {
+	// 执行依赖注入
+	if err := app.container.refresh(false); err != nil {
 		return err
 	}
 
 	// 执行命令行启动器
 	for _, r := range app.Runners {
-		r.Run(app.c)
+		r.Run(app.container)
 	}
 
 	// 通知应用启动事件
 	for _, event := range app.Events {
-		event.OnAppStart(app.c)
+		event.OnAppStart(app.container)
 	}
 
-	app.clear()
-
 	// 通知应用停止事件
-	app.c.Go(func(ctx context.Context) {
+	app.container.Go(func(ctx context.Context) {
 		<-ctx.Done()
 		for _, event := range app.Events {
 			event.OnAppStop(context.Background())
@@ -177,6 +133,7 @@ func (app *App) start() error {
 	})
 
 	app.logger.Info("application started successfully")
+	app.clear()
 	return nil
 }
 
@@ -190,111 +147,45 @@ const DefaultBanner = `
  |___/                         |_|                         |___/ 
 `
 
-func (app *App) getBanner(e *configuration) string {
-	if app.banner != "" {
-		return app.banner
-	}
-	resources, err := e.resourceLocator.Locate("banner.txt")
-	if err != nil {
-		return ""
-	}
-	banner := DefaultBanner
-	for _, resource := range resources {
-		if b, _ := ioutil.ReadAll(resource); b != nil {
-			banner = string(b)
+func (app *App) getBanner(p *conf.Properties) string {
+	var maxChars = 0
+	if lines := strings.Split(DefaultBanner, "\n"); len(lines) > 0 {
+		for _, line := range lines {
+			if lineChars := utf8.RuneCountInString(line); lineChars > maxChars {
+				maxChars = lineChars
+			}
 		}
 	}
-	return banner
+
+	var sb strings.Builder
+	sb.WriteString(DefaultBanner)
+
+	sb.WriteString("\n")
+	if chars := utf8.RuneCountInString(Version); maxChars > chars {
+		sb.WriteString(strings.Repeat(" ", maxChars-chars))
+	}
+	sb.WriteString(Version)
+
+	sb.WriteString("\n")
+	if chars := utf8.RuneCountInString(Website); maxChars > chars {
+		sb.WriteString(strings.Repeat(" ", maxChars-chars))
+	}
+	sb.WriteString(Website)
+
+	return sb.String()
 }
 
 // printBanner 打印 banner 到控制台
 func (app *App) printBanner(banner string) {
-
 	if banner[0] != '\n' {
 		fmt.Println()
 	}
-
-	maxLength := 0
-	for _, s := range strings.Split(banner, "\n") {
-		fmt.Printf("\x1b[36m%s\x1b[0m\n", s) // CYAN
-		if len(s) > maxLength {
-			maxLength = len(s)
-		}
-	}
-
-	if banner[len(banner)-1] != '\n' {
-		fmt.Println()
-	}
-
-	var padding []byte
-	if n := (maxLength - len(Version)) / 2; n > 0 {
-		padding = make([]byte, n)
-		for i := range padding {
-			padding[i] = ' '
-		}
-	}
-	fmt.Println(string(padding) + Version + "\n")
+	fmt.Println(banner)
+	fmt.Println()
 }
 
-func (app *App) loadProperties(e *configuration) error {
-	var resources []Resource
-
-	for _, ext := range e.ConfigExtensions {
-		sources, err := app.loadResource(e, "application"+ext)
-		if err != nil {
-			return err
-		}
-		resources = append(resources, sources...)
-	}
-
-	for _, profile := range e.ActiveProfiles {
-		for _, ext := range e.ConfigExtensions {
-			sources, err := app.loadResource(e, "application-"+profile+ext)
-			if err != nil {
-				return err
-			}
-			resources = append(resources, sources...)
-		}
-	}
-
-	for _, resource := range resources {
-		b, err := ioutil.ReadAll(resource)
-		if err != nil {
-			return err
-		}
-		p, err := conf.Bytes(b, filepath.Ext(resource.Name()))
-		if err != nil {
-			return err
-		}
-		for _, key := range p.Keys() {
-			app.c.initProperties.Set(key, p.Get(key))
-		}
-	}
-
-	return nil
-}
-
-func (app *App) loadResource(e *configuration, filename string) ([]Resource, error) {
-
-	var locators []ResourceLocator
-	locators = append(locators, e.resourceLocator)
-	if app.b != nil {
-		locators = append(locators, app.b.resourceLocators...)
-	}
-
-	var resources []Resource
-	for _, locator := range locators {
-		sources, err := locator.Locate(filename)
-		if err != nil {
-			return nil, err
-		}
-		resources = append(resources, sources...)
-	}
-	return resources, nil
-}
-
-// ShutDown 关闭执行器
-func (app *App) ShutDown(msg ...string) {
+// Shutdown 关闭执行器
+func (app *App) Shutdown(msg ...string) {
 	app.logger.Sugar().Infof("program will exit %s", strings.Join(msg, " "))
 	select {
 	case <-app.exitChan:
@@ -304,35 +195,27 @@ func (app *App) ShutDown(msg ...string) {
 	}
 }
 
-// Bootstrap 返回 *bootstrap 对象。
-func (app *App) Bootstrap() *bootstrap {
-	if app.b == nil {
-		app.b = newBootstrap()
-	}
-	return app.b
-}
-
 // OnProperty 当 key 对应的属性值准备好后发送一个通知。
 func (app *App) OnProperty(key string, fn interface{}) {
-	app.c.OnProperty(key, fn)
+	app.container.OnProperty(key, fn)
 }
 
 // Property 参考 Container.Property 的解释。
 func (app *App) Property(key string, value interface{}) {
-	app.c.Property(key, value)
+	app.container.Property(key, value)
 }
 
 // Accept 参考 Container.Accept 的解释。
 func (app *App) Accept(b *BeanDefinition) *BeanDefinition {
-	return app.c.Accept(b)
+	return app.container.Accept(b)
 }
 
 // Object 参考 Container.Object 的解释。
 func (app *App) Object(i interface{}) *BeanDefinition {
-	return app.c.Accept(NewBean(reflect.ValueOf(i)))
+	return app.container.Accept(NewBean(reflect.ValueOf(i)))
 }
 
 // Provide 参考 Container.Provide 的解释。
 func (app *App) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return app.c.Accept(NewBean(ctor, args...))
+	return app.container.Accept(NewBean(ctor, args...))
 }

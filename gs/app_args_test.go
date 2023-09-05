@@ -25,12 +25,12 @@ import (
 
 func TestLoadCmdArgs(t *testing.T) {
 	t.Run("", func(t *testing.T) {
-		err := LoadCmdArgs([]string{"-D"}, nil)
+		err := loadCmdArgs([]string{"-D"}, nil)
 		assert.Error(t, err, "cmd option -D needs arg")
 	})
 	t.Run("", func(t *testing.T) {
 		p := conf.New()
-		err := LoadCmdArgs([]string{
+		err := loadCmdArgs([]string{
 			"-D", "language=go",
 			"-D", "server",
 		}, p)

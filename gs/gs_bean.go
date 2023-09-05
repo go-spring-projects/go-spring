@@ -152,7 +152,7 @@ func (d *BeanDefinition) getClass() string {
 }
 
 func (d *BeanDefinition) String() string {
-	return fmt.Sprintf("%s name:%q %s", d.getClass(), d.name, d.FileLine())
+	return fmt.Sprintf("%s %q %s", d.getClass(), d.ID(), d.FileLine())
 }
 
 // Match 测试 bean 的类型全限定名和 bean 的名称是否都匹配。

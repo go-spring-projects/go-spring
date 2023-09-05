@@ -54,7 +54,7 @@ func TestConfig(t *testing.T) {
 		app := startApplication("testdata/config/", func(ctx Context) {
 			assert.Equal(t, ctx.Prop("spring.profiles.active"), "dev")
 		})
-		defer app.ShutDown("run test end")
+		defer app.Shutdown("run test end")
 	})
 
 	t.Run("config via env 2", func(t *testing.T) {
@@ -63,7 +63,7 @@ func TestConfig(t *testing.T) {
 		app := startApplication("testdata/config/", func(ctx Context) {
 			assert.Equal(t, ctx.Prop("spring.profiles.active"), "dev")
 		})
-		defer app.ShutDown("run test end")
+		defer app.Shutdown("run test end")
 	})
 
 	t.Run("profile via env&config 2", func(t *testing.T) {
@@ -77,6 +77,6 @@ func TestConfig(t *testing.T) {
 			//	fmt.Println(k, "=", ctx.Prop(k))
 			//}
 		})
-		defer app.ShutDown("run test end")
+		defer app.Shutdown("run test end")
 	})
 }

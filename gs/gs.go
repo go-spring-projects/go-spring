@@ -248,7 +248,7 @@ func newWiringStack(logger *log.Logger) *wiringStack {
 
 // pushBack 添加一个即将注入的 bean 。
 func (s *wiringStack) pushBack(b *BeanDefinition) {
-	s.logger.Sugar().Infof("push %s %s", b, getStatusString(b.status))
+	s.logger.Sugar().Debugf("push %s %s", b, getStatusString(b.status))
 	s.beans = append(s.beans, b)
 }
 
@@ -257,13 +257,13 @@ func (s *wiringStack) popBack() {
 	n := len(s.beans)
 	b := s.beans[n-1]
 	s.beans = s.beans[:n-1]
-	s.logger.Sugar().Infof("pop %s %s", b, getStatusString(b.status))
+	s.logger.Sugar().Debugf("pop %s %s", b, getStatusString(b.status))
 }
 
 // path 返回 bean 的注入路径。
 func (s *wiringStack) path() (path string) {
 	for _, b := range s.beans {
-		path += fmt.Sprintf("=> %s ↩\n", b)
+		path += fmt.Sprintf("↳ %s\n", b)
 	}
 	return path[:len(path)-1]
 }
@@ -371,7 +371,11 @@ func (c *container) refresh(autoClear bool) (err error) {
 
 	defer func() {
 		if err != nil || len(stack.beans) > 0 {
-			c.logger.Error("refresh bean failed", zap.Error(err), zap.String("stack", stack.path()))
+			if nil != err {
+				err = fmt.Errorf("bean refresh failed\n%s\n↳ %w", stack.path(), err)
+			} else {
+				err = fmt.Errorf("bean refresh failed\n%s", stack.path())
+			}
 		}
 	}()
 
@@ -391,7 +395,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 		for _, f := range stack.lazyFields {
 			tag := strings.TrimSuffix(f.tag, ",lazy")
 			if err := c.wireByTag(f.v, tag, stack); err != nil {
-				return fmt.Errorf("%q wired error: %s", f.path, err.Error())
+				return err //fmt.Errorf("%q wired error: %s", f.path, err.Error())
 			}
 		}
 	} else if len(stack.lazyFields) > 0 {
@@ -715,7 +719,7 @@ func (c *container) getBeanValue(b *BeanDefinition, stack *wiringStack) (reflect
 
 	out, err := b.f.Call(&argContext{c: c, stack: stack})
 	if err != nil {
-		return reflect.Value{}, err /* fmt.Errorf("%s:%s return error: %v", b.getClass(), b.ID(), err) */
+		return reflect.Value{}, err //fmt.Errorf("%s:%s return error: %w", b.getClass(), b.ID(), err)
 	}
 
 	// 构造函数的返回值为值类型时 b.Type() 返回其指针类型。
@@ -806,7 +810,7 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 					c.ContextAware = true
 				}
 				if err := c.wireByTag(fv, tag, stack); err != nil {
-					return fmt.Errorf("%q wired error: %w", fieldPath, err)
+					return err //fmt.Errorf("%q wired error: %w", fieldPath, err)
 				}
 			}
 			continue

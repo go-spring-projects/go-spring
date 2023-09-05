@@ -37,19 +37,9 @@ func Run() error {
 	return app.Run()
 }
 
-// ShutDown 停止程序。
-func ShutDown(msg ...string) {
-	app.ShutDown(msg...)
-}
-
-// Banner 参考 App.Banner 的解释。
-func Banner(banner string) {
-	app.Banner(banner)
-}
-
-// Bootstrap 参考 App.Bootstrap 的解释。
-func Bootstrap() *bootstrap {
-	return app.Bootstrap()
+// Shutdown 停止程序。
+func Shutdown(msg ...string) {
+	app.Shutdown(msg...)
 }
 
 // OnProperty 参考 App.OnProperty 的解释。
@@ -64,15 +54,15 @@ func Property(key string, fn interface{}) {
 
 // Accept 参考 Container.Accept 的解释。
 func Accept(b *BeanDefinition) *BeanDefinition {
-	return app.c.Accept(b)
+	return app.container.Accept(b)
 }
 
 // Object 参考 Container.Object 的解释。
 func Object(i interface{}) *BeanDefinition {
-	return app.c.Accept(NewBean(reflect.ValueOf(i)))
+	return app.container.Accept(NewBean(reflect.ValueOf(i)))
 }
 
 // Provide 参考 Container.Provide 的解释。
 func Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return app.c.Accept(NewBean(ctor, args...))
+	return app.container.Accept(NewBean(ctor, args...))
 }

@@ -24,7 +24,7 @@ import (
 
 // Resource 具有名字的 io.Reader 接口称为资源。
 type Resource interface {
-	io.Reader
+	io.ReadCloser
 	Name() string
 }
 
@@ -33,14 +33,14 @@ type ResourceLocator interface {
 	Locate(filename string) ([]Resource, error)
 }
 
-// defaultResourceLocator 从本地文件系统中查找资源。
-type defaultResourceLocator struct {
-	configLocations []string `value:"${spring.config.locations:=config/}"`
+// FileResourceLocator 从本地文件系统中查找资源。
+type FileResourceLocator struct {
+	ConfigLocations []string `value:"${spring.config.locations:=config/}"`
 }
 
-func (locator *defaultResourceLocator) Locate(filename string) ([]Resource, error) {
+func (locator *FileResourceLocator) Locate(filename string) ([]Resource, error) {
 	var resources []Resource
-	for _, location := range locator.configLocations {
+	for _, location := range locator.ConfigLocations {
 		fileLocation := filepath.Join(location, filename)
 		file, err := os.Open(fileLocation)
 		if os.IsNotExist(err) {

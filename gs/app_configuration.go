@@ -17,105 +17,107 @@
 package gs
 
 import (
+	"io/ioutil"
 	"os"
-	"regexp"
-	"strings"
+	"path/filepath"
 
 	"github.com/limpo1989/go-spring/conf"
 )
 
-// EnvPrefix 属性覆盖的环境变量需要携带该前缀。
-const EnvPrefix = "GS_"
-
-// IncludeEnvPatterns 只加载符合条件的环境变量。
-const IncludeEnvPatterns = "INCLUDE_ENV_PATTERNS"
-
-// ExcludeEnvPatterns 排除符合条件的环境变量。
-const ExcludeEnvPatterns = "EXCLUDE_ENV_PATTERNS"
-
-type configuration struct {
-	p *conf.Properties
-
+type Configuration struct {
 	resourceLocator  ResourceLocator
 	ActiveProfiles   []string `value:"${spring.profiles.active:=}"`
 	ConfigExtensions []string `value:"${spring.config.extensions:=.properties,.yaml,.yml,.toml,.tml}"`
 }
 
-// loadSystemEnv 添加符合 includes 条件的环境变量，排除符合 excludes 条件的
-// 环境变量。如果发现存在允许通过环境变量覆盖的属性名，那么保存时转换成真正的属性名。
-func loadSystemEnv(p *conf.Properties) error {
+func NewConfiguration(resourceLocator ResourceLocator) *Configuration {
+	return &Configuration{resourceLocator: resourceLocator}
+}
 
-	toRex := func(patterns []string) ([]*regexp.Regexp, error) {
-		var rex []*regexp.Regexp
-		for _, v := range patterns {
-			exp, err := regexp.Compile(v)
-			if err != nil {
-				return nil, err
-			}
-			rex = append(rex, exp)
-		}
-		return rex, nil
-	}
+func (e *Configuration) Load(props *conf.Properties) error {
+	p := conf.New()
 
-	includes := []string{".*"}
-	if s, ok := os.LookupEnv(IncludeEnvPatterns); ok {
-		includes = strings.Split(s, ",")
+	if err := loadSystemEnv(p); err != nil {
+		return err
 	}
-	includeRex, err := toRex(includes)
-	if err != nil {
+	if err := loadCmdArgs(os.Args, p); err != nil {
+		return err
+	}
+	if err := p.Bind(e); err != nil {
+		return err
+	}
+	if err := p.Bind(e.resourceLocator); err != nil {
 		return err
 	}
 
-	var excludes []string
-	if s, ok := os.LookupEnv(ExcludeEnvPatterns); ok {
-		excludes = strings.Split(s, ",")
-	}
-	excludeRex, err := toRex(excludes)
-	if err != nil {
+	// 从文件加载的配置
+	if err := e.loadProperties(props); nil != err {
 		return err
 	}
 
-	matches := func(rex []*regexp.Regexp, s string) bool {
-		for _, r := range rex {
-			if r.MatchString(s) {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, env := range os.Environ() {
-		ss := strings.SplitN(env, "=", 2)
-		k, v := ss[0], ""
-		if len(ss) > 1 {
-			v = ss[1]
-		}
-		if strings.HasPrefix(k, EnvPrefix) {
-			propKey := strings.TrimPrefix(k, EnvPrefix)
-			propKey = strings.ReplaceAll(propKey, "_", ".")
-			propKey = strings.ToLower(propKey)
-			p.Set(propKey, v)
-			continue
-		}
-		if matches(includeRex, k) && !matches(excludeRex, k) {
-			p.Set(k, v)
-		}
+	// 从环境变量和参数获取的配置优先级更高
+	for _, k := range p.Keys() {
+		props.Set(k, p.Get(k))
 	}
 	return nil
 }
 
-func (e *configuration) prepare() error {
-	if err := loadSystemEnv(e.p); err != nil {
-		return err
+func (e *Configuration) loadProperties(props *conf.Properties) error {
+	var resources []Resource
+
+	for _, ext := range e.ConfigExtensions {
+		sources, err := e.loadResource("application" + ext)
+		if err != nil {
+			return err
+		}
+		resources = append(resources, sources...)
 	}
-	if err := LoadCmdArgs(os.Args, e.p); err != nil {
-		return err
+
+	for _, profile := range e.ActiveProfiles {
+		for _, ext := range e.ConfigExtensions {
+			sources, err := e.loadResource("application-" + profile + ext)
+			if err != nil {
+				return err
+			}
+			resources = append(resources, sources...)
+		}
 	}
-	if err := e.p.Bind(e); err != nil {
-		return err
+
+	defer func() {
+		for _, resource := range resources {
+			_ = resource.Close()
+		}
+	}()
+
+	for _, resource := range resources {
+		b, err := ioutil.ReadAll(resource)
+		if err != nil {
+			return err
+		}
+		p, err := conf.Bytes(b, filepath.Ext(resource.Name()))
+		if err != nil {
+			return err
+		}
+		for _, key := range p.Keys() {
+			props.Set(key, p.Get(key))
+		}
 	}
-	if err := e.p.Bind(e.resourceLocator); err != nil {
-		return err
-	}
+
 	return nil
+}
+
+func (e *Configuration) loadResource(filename string) ([]Resource, error) {
+
+	var locators []ResourceLocator
+	locators = append(locators, e.resourceLocator)
+
+	var resources []Resource
+	for _, locator := range locators {
+		sources, err := locator.Locate(filename)
+		if err != nil {
+			return nil, err
+		}
+		resources = append(resources, sources...)
+	}
+	return resources, nil
 }

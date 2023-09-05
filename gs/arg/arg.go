@@ -203,7 +203,7 @@ func (r *argList) get(ctx Context, fileLine string) ([]reflect.Value, error) {
 		// option arg may not return a value when the condition is not met.
 		v, err := r.getArg(ctx, arg, t, fileLine)
 		if err != nil {
-			return nil, utils.Wrapf(err, utils.FileLine(), "returns error when getting %d arg", idx)
+			return nil, err //utils.Wrapf(err, fileLine, "returns error when getting %d arg", idx)
 		}
 		if v.IsValid() {
 			result = append(result, v)
@@ -220,15 +220,15 @@ func (r *argList) getArg(ctx Context, arg Arg, t reflect.Type, fileLine string) 
 		tag string
 	)
 
-	description := fmt.Sprintf("arg:\"%v\" %s", arg, fileLine)
-	r.logger.Sugar().Infof("get value %s", description)
+	/*description := fmt.Sprintf("arg:\"%#v\" %s", arg, fileLine)
+	//r.logger.Sugar().Debugf("get value %s", description)
 	defer func() {
 		if err == nil {
-			r.logger.Sugar().Infof("get value success %s", description)
+			r.logger.Sugar().Debugf("get value success %s", description)
 		} else {
-			r.logger.Sugar().Infof("get value error %s %s", err.Error(), description)
+			r.logger.Sugar().Errorf("get value error %s for %s", err.Error(), description)
 		}
-	}()
+	}()*/
 
 	switch g := arg.(type) {
 	case *Callable:
@@ -323,14 +323,14 @@ func (arg *optionArg) call(ctx Context) (reflect.Value, error) {
 		err error
 	)
 
-	arg.logger.Sugar().Infof("call option func %s", arg.r.fileLine)
-	defer func() {
-		if err == nil {
-			arg.logger.Sugar().Infof("call option func success %s", arg.r.fileLine)
-		} else {
-			arg.logger.Sugar().Infof("call option func error %s %s", err.Error(), arg.r.fileLine)
-		}
-	}()
+	/*	arg.logger.Sugar().Debugf("call option func %s", arg.r.fileLine)
+		defer func() {
+			if err == nil {
+				arg.logger.Sugar().Debugf("call option func success %s", arg.r.fileLine)
+			} else {
+				arg.logger.Sugar().Errorf("call option func error %s %s", err.Error(), arg.r.fileLine)
+			}
+		}()*/
 
 	if arg.c != nil {
 		ok, err = ctx.Matches(arg.c)
@@ -398,7 +398,7 @@ func (r *Callable) Call(ctx Context) ([]reflect.Value, error) {
 
 	in, err := r.argList.get(ctx, r.fileLine)
 	if err != nil {
-		return nil, err
+		return nil, err //fmt.Errorf("↳%s: %s\n%w", r.fnType.String(), r.fileLine, err)
 	}
 
 	out := reflect.ValueOf(r.fn).Call(in)
