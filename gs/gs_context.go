@@ -18,6 +18,7 @@ package gs
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 
 	"github.com/limpo1989/go-spring/conf"
@@ -79,37 +80,35 @@ func (c *container) Get(i interface{}, selectors ...utils.BeanSelector) error {
 		return errors.New("i must be pointer")
 	}
 
-	stack := newWiringStack(c.logger)
-
-	defer func() {
-		if len(stack.beans) > 0 {
-			c.logger.Sugar().Debugf("wiring path %s", stack.path())
-		}
-	}()
-
 	var tags []wireTag
 	for _, s := range selectors {
 		tags = append(tags, toWireTag(s))
 	}
-	return c.autowire(v.Elem(), tags, false, stack)
+
+	stack := newWiringStack(c.logger)
+	if err := c.autowire(v.Elem(), tags, false, stack); nil != err || len(stack.beans) > 0 {
+		if nil != err {
+			err = fmt.Errorf("get bean failed\n%s\n↳%w", stack.path(), err)
+		} else {
+			err = fmt.Errorf("get bean failed\n%s", stack.path())
+		}
+		return err
+	}
+	return nil
 }
 
 // Wire 如果传入的是 bean 对象，则对 bean 对象进行属性绑定和依赖注入，如果传入的
 // 是构造函数，则立即执行该构造函数，然后对返回的结果进行属性绑定和依赖注入。无论哪
 // 种方式，该函数执行完后都会返回 bean 对象的真实值。
 func (c *container) Wire(objOrCtor interface{}, ctorArgs ...arg.Arg) (interface{}, error) {
-
-	stack := newWiringStack(c.logger)
-
-	defer func() {
-		if len(stack.beans) > 0 {
-			c.logger.Sugar().Debugf("wiring path %s", stack.path())
-		}
-	}()
-
 	b := NewBean(objOrCtor, ctorArgs...)
-	err := c.wireBean(b, stack)
-	if err != nil {
+	stack := newWiringStack(c.logger)
+	if err := c.wireBean(b, stack); nil != err || len(stack.beans) > 0 {
+		if nil != err {
+			err = fmt.Errorf("get bean failed\n%s\n↳%w", stack.path(), err)
+		} else {
+			err = fmt.Errorf("get bean failed\n%s", stack.path())
+		}
 		return nil, err
 	}
 	return b.Interface(), nil

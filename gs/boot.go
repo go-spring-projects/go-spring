@@ -17,6 +17,7 @@
 package gs
 
 import (
+	"context"
 	"os"
 	"reflect"
 
@@ -24,7 +25,7 @@ import (
 	"github.com/limpo1989/go-spring/utils"
 )
 
-var app = NewApp()
+var bootApp = NewApp()
 
 // Setenv 封装 os.Setenv 函数，如果发生 error 会 panic 。
 func Setenv(key string, value string) {
@@ -33,36 +34,46 @@ func Setenv(key string, value string) {
 }
 
 // Run 启动程序。
-func Run() error {
-	return app.Run()
+func Run(resourceLocator ...ResourceLocator) error {
+	return bootApp.Run(resourceLocator...)
 }
 
 // Shutdown 停止程序。
 func Shutdown(msg ...string) {
-	app.Shutdown(msg...)
+	bootApp.Shutdown(msg...)
 }
 
-// OnProperty 参考 App.OnProperty 的解释。
+// OnProperty 注册属性监听
 func OnProperty(key string, fn interface{}) {
-	app.OnProperty(key, fn)
+	bootApp.OnProperty(key, fn)
 }
 
-// Property 参考 App.Property 的解释。
+// Property 设置属性键值对
 func Property(key string, fn interface{}) {
-	app.Property(key, fn)
+	bootApp.Property(key, fn)
 }
 
-// Accept 参考 Container.Accept 的解释。
+// Accept 注册自定义bean
 func Accept(b *BeanDefinition) *BeanDefinition {
-	return app.container.Accept(b)
+	return bootApp.container.Accept(b)
 }
 
-// Object 参考 Container.Object 的解释。
+// Object 注册一个对象bean
 func Object(i interface{}) *BeanDefinition {
-	return app.container.Accept(NewBean(reflect.ValueOf(i)))
+	return bootApp.container.Accept(NewBean(reflect.ValueOf(i)))
 }
 
-// Provide 参考 Container.Provide 的解释。
+// Provide 注册一个方法bean
 func Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return app.container.Accept(NewBean(ctor, args...))
+	return bootApp.container.Accept(NewBean(ctor, args...))
+}
+
+// Go 启动一个受gs管理的协程
+func Go(fn func(ctx context.Context)) {
+	bootApp.container.Go(fn)
+}
+
+// AllowCircularReferences 启用循环依赖（注意构造函数bean循环依赖无解）
+func AllowCircularReferences() {
+	bootApp.container.AllowCircularReferences()
 }

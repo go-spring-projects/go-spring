@@ -26,7 +26,7 @@ import (
 
 type Configuration struct {
 	resourceLocator  ResourceLocator
-	ActiveProfiles   []string `value:"${spring.profiles.active:=}"`
+	ActiveProfiles   []string `value:"${spring.config.profiles:=}"`
 	ConfigExtensions []string `value:"${spring.config.extensions:=.properties,.yaml,.yml,.toml,.tml}"`
 }
 

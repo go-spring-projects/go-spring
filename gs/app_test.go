@@ -27,7 +27,7 @@ import (
 func startApplication(cfgLocation string, fn func(Context)) *App {
 
 	app := NewApp()
-	Setenv("GS_SPRING_BANNER_VISIBLE", "true")
+	Setenv("GS_SPRING_CONFIG_BANNER", "true")
 	Setenv("GS_SPRING_CONFIG_LOCATIONS", cfgLocation)
 
 	type PandoraAware struct{}
@@ -50,27 +50,27 @@ func TestConfig(t *testing.T) {
 
 	t.Run("config via env", func(t *testing.T) {
 		os.Clearenv()
-		Setenv("GS_SPRING_PROFILES_ACTIVE", "dev")
+		Setenv("GS_SPRING_CONFIG_PROFILES", "dev")
 		app := startApplication("testdata/config/", func(ctx Context) {
-			assert.Equal(t, ctx.Prop("spring.profiles.active"), "dev")
+			assert.Equal(t, ctx.Prop("spring.config.profiles"), "dev")
 		})
 		defer app.Shutdown("run test end")
 	})
 
 	t.Run("config via env 2", func(t *testing.T) {
 		os.Clearenv()
-		Setenv("GS_SPRING_PROFILES_ACTIVE", "dev")
+		Setenv("GS_SPRING_CONFIG_PROFILES", "dev")
 		app := startApplication("testdata/config/", func(ctx Context) {
-			assert.Equal(t, ctx.Prop("spring.profiles.active"), "dev")
+			assert.Equal(t, ctx.Prop("spring.config.profiles"), "dev")
 		})
 		defer app.Shutdown("run test end")
 	})
 
 	t.Run("profile via env&config 2", func(t *testing.T) {
 		os.Clearenv()
-		Setenv("GS_SPRING_PROFILES_ACTIVE", "dev")
+		Setenv("GS_SPRING_CONFIG_PROFILES", "dev")
 		app := startApplication("testdata/config/", func(ctx Context) {
-			assert.Equal(t, ctx.Prop("spring.profiles.active"), "dev")
+			assert.Equal(t, ctx.Prop("spring.config.profiles"), "dev")
 			//keys := ctx.Properties().Keys()
 			//sort.Strings(keys)
 			//for _, k := range keys {

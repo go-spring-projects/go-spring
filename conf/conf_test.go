@@ -343,14 +343,14 @@ func TestResolve(t *testing.T) {
 	p := New()
 
 	_, err := p.Resolve("my name is ${name}")
-	assert.Error(t, err, "resolve property \"name\" error; property \"name\" not exist")
+	assert.Error(t, err, "resolve string \"my name is \\${name}\" error: property \"name\": not exist")
 
 	_ = p.Set("name", "Jim")
 	_, err = p.Resolve("my name is ${name")
-	assert.Error(t, err, "resolve string \"my name is \\${name\" error; invalid syntax")
+	assert.Error(t, err, "resolve string \"my name is \\${name\" error: invalid syntax")
 
 	_, err = p.Resolve("my name is ${name} my name is ${name")
-	assert.Error(t, err, "resolve string \" my name is \\${name\" error; invalid syntax")
+	assert.Error(t, err, "resolve string \" my name is \\${name\" error: invalid syntax")
 
 	str, err := p.Resolve("my name is ${name}")
 	assert.Nil(t, err)

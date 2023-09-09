@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -32,9 +33,6 @@ import (
 	"github.com/limpo1989/go-spring/log"
 	"github.com/limpo1989/go-spring/utils"
 )
-
-// SpringBannerVisible 是否显示 banner。
-const SpringBannerVisible = "spring.banner.visible"
 
 // AppRunner 命令行启动器接口
 type AppRunner interface {
@@ -52,9 +50,6 @@ type App struct {
 	logger    *log.Logger
 	container *container
 	exitChan  chan struct{}
-
-	Events  []AppEvent  `autowire:"*?"`
-	Runners []AppRunner `autowire:"*?"`
 }
 
 // NewApp application 的构造函数
@@ -65,8 +60,7 @@ func NewApp() *App {
 	}
 }
 
-func (app *App) Run() error {
-	app.Object(app)
+func (app *App) Run(resourceLocator ...ResourceLocator) error {
 	app.logger = log.GetLogger(utils.TypeName(app))
 
 	// 响应控制台的 Ctrl+C 及 kill 命令。
@@ -77,35 +71,28 @@ func (app *App) Run() error {
 		app.Shutdown(fmt.Sprintf("signal %v", sig))
 	}()
 
-	if err := app.start(); err != nil {
+	var locator ResourceLocator = new(FileResourceLocator)
+	if len(resourceLocator) > 0 && resourceLocator[0] != nil {
+		locator = resourceLocator[0]
+	}
+
+	return app.run(locator)
+}
+
+func (app *App) run(resourceLocator ResourceLocator) error {
+
+	e := NewConfiguration(resourceLocator)
+
+	if err := e.Load(app.container.props); nil != err {
 		return err
 	}
 
-	<-app.exitChan
-
-	app.container.Close()
-	app.logger.Info("application exited")
-	return nil
-}
-
-func (app *App) clear() {
-	app.container.clear()
-}
-
-func (app *App) start() error {
-
-	e := NewConfiguration(new(FileResourceLocator))
-
-	if err := e.Load(app.container.initProperties); nil != err {
-		return err
-	}
-
-	if showBanner, _ := strconv.ParseBool(app.container.initProperties.Get(SpringBannerVisible)); showBanner {
-		app.printBanner(app.getBanner(app.container.initProperties))
+	if showBanner, _ := strconv.ParseBool(app.container.props.Get("spring.config.banner", conf.Def("true"))); showBanner {
+		app.printBanner(app.getBanner(app.container.props))
 	}
 
 	// 初始化属性
-	if err := app.container.p.Refresh(app.container.initProperties); nil != err {
+	if err := app.container.p.Refresh(app.container.props); nil != err {
 		return err
 	}
 
@@ -114,64 +101,101 @@ func (app *App) start() error {
 		return err
 	}
 
-	// 执行命令行启动器
-	for _, r := range app.Runners {
-		r.Run(app.container)
-	}
+	//  OnInit
+	//  Run
+	//  OnAppStart
+	//  ---wait-signal---
+	//  Stop GoRoutine
+	//  OnAppStop
+	//  OnDestroy
 
-	// 通知应用启动事件
-	for _, event := range app.Events {
-		event.OnAppStart(app.container)
-	}
+	app.onAppRun(app.container)
 
-	// 通知应用停止事件
-	app.container.Go(func(ctx context.Context) {
-		<-ctx.Done()
-		for _, event := range app.Events {
-			event.OnAppStop(context.Background())
-		}
-	})
+	app.onAppStart(app.container)
 
+	app.container.clear()
 	app.logger.Info("application started successfully")
-	app.clear()
+
+	// 等待应用停止信号
+	<-app.exitChan
+
+	// 停止所有受GS管理的协程
+	app.container.Cancel()
+
+	// 结束应用
+	app.onAppStop(context.Background())
+
+	// 执行析构函数
+	app.container.Close()
+
+	app.logger.Info("application exited")
+
 	return nil
 }
 
+func (app *App) onAppRun(ctx Context) {
+	for _, bean := range app.container.Dependencies(true) {
+		x := bean.Value().Interface()
+
+		if ar, ok := x.(AppRunner); ok {
+			ar.Run(ctx)
+		}
+	}
+}
+
+func (app *App) onAppStart(ctx Context) {
+	for _, bean := range app.container.Dependencies(true) {
+		x := bean.Value().Interface()
+
+		if ae, ok := x.(AppEvent); ok {
+			ae.OnAppStart(ctx)
+		}
+	}
+}
+
+func (app *App) onAppStop(ctx context.Context) {
+	for _, bean := range app.container.Dependencies(false) {
+		x := bean.Value().Interface()
+
+		if ae, ok := x.(AppEvent); ok {
+			ae.OnAppStop(ctx)
+		}
+	}
+}
+
 const DefaultBanner = `
-                                              (_)              
-  __ _    ___             ___   _ __    _ __   _   _ __     __ _ 
- / _' |  / _ \   ______  / __| | '_ \  | '__| | | | '_ \   / _' |
-| (_| | | (_) | |______| \__ \ | |_) | | |    | | | | | | | (_| |
- \__, |  \___/           |___/ | .__/  |_|    |_| |_| |_|  \__, |
-  __/ |                        | |                          __/ |
- |___/                         |_|                         |___/ 
+  ______  _____      _______  _____   ______ _____ __   _  ______
+ |  ____ |     | ___ |______ |_____] |_____/   |   | \  | |  ____
+ |_____| |_____|     ______| |       |    \_ __|__ |  \_| |_____|
 `
 
 func (app *App) getBanner(p *conf.Properties) string {
-	var maxChars = 0
+	var maxPadding = 0
 	if lines := strings.Split(DefaultBanner, "\n"); len(lines) > 0 {
 		for _, line := range lines {
-			if lineChars := utf8.RuneCountInString(line); lineChars > maxChars {
-				maxChars = lineChars
+			if lineChars := utf8.RuneCountInString(line); lineChars > maxPadding {
+				maxPadding = lineChars
 			}
 		}
 	}
 
+	var splitter = strings.Repeat("-", maxPadding)
+	var appRuntime = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
+
 	var sb strings.Builder
 	sb.WriteString(DefaultBanner)
 
-	sb.WriteString("\n")
-	if chars := utf8.RuneCountInString(Version); maxChars > chars {
-		sb.WriteString(strings.Repeat(" ", maxChars-chars))
+	for _, info := range []string{Website, Version, appRuntime} {
+		if len(info) > 0 {
+			sb.WriteString("\n")
+			if chars := utf8.RuneCountInString(info); maxPadding > chars {
+				sb.WriteString(strings.Repeat(" ", maxPadding-chars))
+			}
+			sb.WriteString(info)
+		}
 	}
-	sb.WriteString(Version)
-
 	sb.WriteString("\n")
-	if chars := utf8.RuneCountInString(Website); maxChars > chars {
-		sb.WriteString(strings.Repeat(" ", maxChars-chars))
-	}
-	sb.WriteString(Website)
-
+	sb.WriteString(splitter)
 	return sb.String()
 }
 
@@ -218,4 +242,9 @@ func (app *App) Object(i interface{}) *BeanDefinition {
 // Provide 参考 Container.Provide 的解释。
 func (app *App) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 	return app.container.Accept(NewBean(ctor, args...))
+}
+
+// AllowCircularReferences 参考 Container.AllowCircularReferences 的解释。
+func (app *App) AllowCircularReferences() {
+	app.container.AllowCircularReferences()
 }

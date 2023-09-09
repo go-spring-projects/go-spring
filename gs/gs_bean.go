@@ -264,6 +264,34 @@ func (d *BeanDefinition) export(exports ...interface{}) error {
 	return nil
 }
 
+func (d *BeanDefinition) constructor(ctx Context) error {
+	if d.init != nil {
+		fnValue := reflect.ValueOf(d.init)
+		out := fnValue.Call([]reflect.Value{d.Value()})
+		if len(out) > 0 && !out[0].IsNil() {
+			return out[0].Interface().(error)
+		}
+	}
+
+	if f, ok := d.Interface().(BeanInit); ok {
+		if err := f.OnInit(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *BeanDefinition) destructor() {
+	if d.destroy != nil {
+		fnValue := reflect.ValueOf(d.destroy)
+		fnValue.Call([]reflect.Value{d.Value()})
+	}
+
+	if f, ok := d.Interface().(BeanDestroy); ok {
+		f.OnDestroy()
+	}
+}
+
 // NewBean 普通函数注册时需要使用 reflect.ValueOf(fn) 形式以避免和构造函数发生冲突。
 func NewBean(objOrCtor interface{}, ctorArgs ...arg.Arg) *BeanDefinition {
 

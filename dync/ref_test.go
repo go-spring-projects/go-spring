@@ -48,7 +48,7 @@ func TestRef_Uint32(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := r.OnRefresh(p, param)
-	assert.Error(t, err, "bind uint32 error; .* resolve property \"uint\" error; property \"uint\" not exist")
+	assert.Error(t, err, "bind uint32 error: property \"uint\": not exist")
 	assert.Equal(t, count, 0)
 
 	_ = p.Set("uint", uint32(3))
@@ -97,7 +97,7 @@ func TestRef_Duration(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := r.OnRefresh(p, param)
-	assert.Error(t, err, "bind Duration error; .* resolve property \"d\" error; property \"d\" not exist")
+	assert.Error(t, err, "bind Duration error: property \"d\": not exist")
 	assert.Equal(t, count, 0)
 
 	_ = p.Set("d", "10s")
@@ -135,7 +135,7 @@ func TestRef_Time(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := r.OnRefresh(p, param)
-	assert.Error(t, err, "bind Time error; .* resolve property \"time\" error; property \"time\" not exist")
+	assert.Error(t, err, "bind Time error: property \"time\": not exist")
 	assert.Equal(t, count, 0)
 
 	_ = p.Set("time", "2017-06-17 13:20:15 UTC")

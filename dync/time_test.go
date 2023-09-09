@@ -40,7 +40,7 @@ func TestTime(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := tm.OnRefresh(p, param)
-	assert.Error(t, err, "bind Time error; .* resolve property \"time\" error; property \"time\" not exist")
+	assert.Error(t, err, "bind Time error: property \"time\": not exist")
 
 	_ = p.Set("time", "2017-06-17 13:20:15 UTC")
 

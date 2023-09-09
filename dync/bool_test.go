@@ -39,7 +39,7 @@ func TestBool(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := u.OnRefresh(p, param)
-	assert.Error(t, err, "bind bool error; .* resolve property \"bool\" error; property \"bool\" not exist")
+	assert.Error(t, err, "bind bool error: property \"bool\": not exist")
 
 	_ = p.Set("bool", true)
 	err = u.OnRefresh(p, param)

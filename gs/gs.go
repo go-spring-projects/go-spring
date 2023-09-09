@@ -20,7 +20,6 @@ package gs
 
 import (
 	"bytes"
-	"container/list"
 	"context"
 	"errors"
 	"fmt"
@@ -34,10 +33,8 @@ import (
 	"github.com/limpo1989/go-spring/dync"
 	"github.com/limpo1989/go-spring/gs/arg"
 	"github.com/limpo1989/go-spring/gs/cond"
-	"github.com/limpo1989/go-spring/gs/internal"
 	"github.com/limpo1989/go-spring/log"
 	"github.com/limpo1989/go-spring/utils"
-	"go.uber.org/zap"
 )
 
 type refreshState int
@@ -57,20 +54,14 @@ var (
 type Container interface {
 	Context() context.Context
 	Properties() *dync.Properties
+	AllowCircularReferences()
 	Object(i interface{}) *BeanDefinition
 	Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition
 	Refresh() error
 	Close()
 }
 
-// Context 提供了一些在 IoC 容器启动后基于反射获取和使用 property 与 bean 的接
-// 口。因为很多人会担心在运行时大量使用反射会降低程序性能，所以命名为 Context，取
-// 其诱人但危险的含义。事实上，这些在 IoC 容器启动后使用属性绑定和依赖注入的方案，
-// 都可以转换为启动阶段的方案以提高程序的性能。
-// 另一方面，为了统一 Container 和 App 两种启动方式下这些方法的使用方式，需要提取
-// 出一个可共用的接口来，也就是说，无论程序是 Container 方式启动还是 App 方式启动，
-// 都可以在需要使用这些方法的地方注入一个 Context 对象而不是 Container 对象或者
-// App 对象，从而实现使用方式的统一。
+// Context 提供了一些在 IoC 容器启动后基于反射获取和使用 property 与 bean 的接口。
 type Context interface {
 	Context() context.Context
 	Keys() []string
@@ -90,7 +81,7 @@ type ContextAware struct {
 }
 
 type tempContainer struct {
-	initProperties  *conf.Properties
+	props           *conf.Properties
 	beans           []*BeanDefinition
 	beansByName     map[string][]*BeanDefinition
 	beansByType     map[reflect.Type][]*BeanDefinition
@@ -109,12 +100,12 @@ type container struct {
 	logger                  *log.Logger
 	ctx                     context.Context
 	cancel                  context.CancelFunc
-	destroyers              []func()
+	dependencies            []*BeanDefinition
 	state                   refreshState
 	wg                      sync.WaitGroup
 	p                       *dync.Properties
-	ContextAware            bool
-	AllowCircularReferences bool `value:"${spring.main.allow-circular-references:=false}"`
+	contextAware            bool
+	allowCircularReferences bool
 }
 
 // New 创建 IoC 容器。
@@ -125,7 +116,7 @@ func New() Container {
 		cancel: cancel,
 		p:      dync.New(),
 		tempContainer: &tempContainer{
-			initProperties:  conf.New(),
+			props:           conf.New(),
 			beansByName:     make(map[string][]*BeanDefinition),
 			beansByType:     make(map[reflect.Type][]*BeanDefinition),
 			mapOfOnProperty: make(map[string]interface{}),
@@ -166,7 +157,7 @@ func (c *container) OnProperty(key string, fn interface{}) {
 // 类型组合构成的属性值，其处理方式是将组合结构层层展开，可以将组合结构看成一棵树，
 // 那么叶子结点的路径就是属性的 key，叶子结点的值就是属性的值。
 func (c *container) Property(key string, value interface{}) {
-	c.initProperties.Set(key, value)
+	c.props.Set(key, value)
 }
 
 func (c *container) Accept(b *BeanDefinition) *BeanDefinition {
@@ -187,40 +178,23 @@ func (c *container) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 	return c.Accept(NewBean(ctor, args...))
 }
 
-// destroyer 保存具有销毁函数的 bean 以及销毁函数的调用顺序。
-type destroyer struct {
-	current *BeanDefinition
-	earlier []*BeanDefinition
+// AllowCircularReferences 启用循环依赖
+func (c *container) AllowCircularReferences() {
+	c.allowCircularReferences = true
 }
 
-func (d *destroyer) foundEarlier(b *BeanDefinition) bool {
-	for _, c := range d.earlier {
-		if c == b {
-			return true
+// Dependencies 按照正序或者反序返回依赖
+func (c *container) Dependencies(asc bool) (deps []*BeanDefinition) {
+	if !asc {
+		deps = make([]*BeanDefinition, 0, len(c.dependencies))
+		for i := len(c.dependencies) - 1; i >= 0; i-- {
+			deps = append(deps, c.dependencies[i])
 		}
+	} else {
+		deps = make([]*BeanDefinition, len(c.dependencies))
+		copy(deps[:], c.dependencies[:])
 	}
-	return false
-}
-
-// after 添加一个需要在该 bean 的销毁函数执行之前调用销毁函数的 bean 。
-func (d *destroyer) after(b *BeanDefinition) {
-	if d.foundEarlier(b) {
-		return
-	}
-	d.earlier = append(d.earlier, b)
-}
-
-// getBeforeDestroyers 获取排在 i 前面的 destroyer，用于 sort.Triple 排序。
-func getBeforeDestroyers(destroyers *list.List, i interface{}) *list.List {
-	d := i.(*destroyer)
-	result := list.New()
-	for e := destroyers.Front(); e != nil; e = e.Next() {
-		c := e.Value.(*destroyer)
-		if d.foundEarlier(c.current) {
-			result.PushBack(c)
-		}
-	}
-	return result
+	return
 }
 
 type lazyField struct {
@@ -232,17 +206,14 @@ type lazyField struct {
 // wiringStack 记录 bean 的注入路径。
 type wiringStack struct {
 	logger       *log.Logger
-	destroyers   *list.List
-	destroyerMap map[string]*destroyer
 	beans        []*BeanDefinition
 	lazyFields   []lazyField
+	dependencies []*BeanDefinition
 }
 
 func newWiringStack(logger *log.Logger) *wiringStack {
 	return &wiringStack{
-		logger:       logger,
-		destroyers:   list.New(),
-		destroyerMap: make(map[string]*destroyer),
+		logger: logger,
 	}
 }
 
@@ -260,53 +231,27 @@ func (s *wiringStack) popBack() {
 	s.logger.Sugar().Debugf("pop %s %s", b, getStatusString(b.status))
 }
 
-// path 返回 bean 的注入路径。
-func (s *wiringStack) path() (path string) {
-	for _, b := range s.beans {
-		path += fmt.Sprintf("↳ %s\n", b)
-	}
-	return path[:len(path)-1]
-}
-
-// saveDestroyer 记录具有销毁函数的 bean ，因为可能有多个依赖，因此需要排重处理。
-func (s *wiringStack) saveDestroyer(b *BeanDefinition) *destroyer {
-	d, ok := s.destroyerMap[b.ID()]
-	if !ok {
-		d = &destroyer{current: b}
-		s.destroyerMap[b.ID()] = d
-	}
-	return d
-}
-
-// sortDestroyers 对具有销毁函数的 bean 按照销毁函数的依赖顺序进行排序。
-func (s *wiringStack) sortDestroyers() []func() {
-
-	destroy := func(v reflect.Value, fn interface{}) func() {
-		return func() {
-			if fn == nil {
-				v.Interface().(BeanDestroy).OnDestroy()
-			} else {
-				fnValue := reflect.ValueOf(fn)
-				out := fnValue.Call([]reflect.Value{v})
-				if len(out) > 0 && !out[0].IsNil() {
-					s.logger.Error("OnDestroy: ", zap.Error(out[0].Interface().(error)))
-				}
-			}
+// pushDependency 记录依赖顺序
+func (s *wiringStack) pushDependency(b *BeanDefinition) {
+	for _, bean := range s.dependencies {
+		if bean == b {
+			return
 		}
 	}
+	s.dependencies = append(s.dependencies, b)
+}
 
-	destroyers := list.New()
-	for _, d := range s.destroyerMap {
-		destroyers.PushBack(d)
+// path 返回 bean 的注入路径。
+func (s *wiringStack) path() (path string) {
+	var sb strings.Builder
+	for idx, b := range s.beans {
+		if idx > 0 {
+			sb.WriteString("\n")
+		}
+		sb.WriteString("↳")
+		sb.WriteString(b.String())
 	}
-	destroyers = internal.TripleSort(destroyers, getBeforeDestroyers)
-
-	var ret []func()
-	for e := destroyers.Front(); e != nil; e = e.Next() {
-		d := e.Value.(*destroyer).current
-		ret = append(ret, destroy(d.Value(), d.destroy))
-	}
-	return ret
+	return sb.String()
 }
 
 func (c *container) clear() {
@@ -323,11 +268,12 @@ func (c *container) refresh(autoClear bool) (err error) {
 	if c.state != Unrefreshed {
 		return errors.New("container already refreshed")
 	}
-	c.state = RefreshInit
 
 	start := time.Now()
-	c.Object(c).Export((*Context)(nil))
+	c.state = RefreshInit
 	c.logger = log.GetLogger(utils.TypeName(c))
+
+	c.Object(c).Export((*Context)(nil))
 
 	for key, f := range c.mapOfOnProperty {
 		t := reflect.TypeOf(f)
@@ -372,9 +318,9 @@ func (c *container) refresh(autoClear bool) (err error) {
 	defer func() {
 		if err != nil || len(stack.beans) > 0 {
 			if nil != err {
-				err = fmt.Errorf("bean refresh failed\n%s\n↳ %w", stack.path(), err)
+				err = fmt.Errorf("container refresh failed\n%s\n↳%w", stack.path(), err)
 			} else {
-				err = fmt.Errorf("bean refresh failed\n%s", stack.path())
+				err = fmt.Errorf("container refresh failed\n%s", stack.path())
 			}
 		}
 	}()
@@ -390,25 +336,21 @@ func (c *container) refresh(autoClear bool) (err error) {
 		}
 	}
 
-	if c.AllowCircularReferences {
-		// 处理被标记为延迟注入的那些 bean 字段
-		for _, f := range stack.lazyFields {
-			tag := strings.TrimSuffix(f.tag, ",lazy")
-			if err := c.wireByTag(f.v, tag, stack); err != nil {
-				return err //fmt.Errorf("%q wired error: %s", f.path, err.Error())
-			}
+	// 处理被标记为延迟注入的那些 bean 字段
+	for _, f := range stack.lazyFields {
+		tag := strings.TrimSuffix(f.tag, ",lazy")
+		if err := c.wireByTag(f.v, tag, stack); err != nil {
+			return err //fmt.Errorf("%q wired error: %s", f.path, err.Error())
 		}
-	} else if len(stack.lazyFields) > 0 {
-		return errors.New("remove the dependency cycle between beans")
 	}
 
-	c.destroyers = stack.sortDestroyers()
+	c.dependencies = stack.dependencies
 	c.state = Refreshed
 
 	cost := time.Now().Sub(start)
 	c.logger.Sugar().Infof("refresh %d beans cost %v", len(beansById), cost)
 
-	if autoClear && !c.ContextAware {
+	if autoClear && !c.contextAware {
 		c.clear()
 	}
 
@@ -598,48 +540,31 @@ func (c *container) findBean(selector utils.BeanSelector) ([]*BeanDefinition, er
 // 实例化被依赖的 bean 然后对它们进行注入。
 func (c *container) wireBean(b *BeanDefinition, stack *wiringStack) error {
 
+	// bean在决议期间因为条件不满足被删除
 	if b.status == Deleted {
 		return fmt.Errorf("bean:%q have been deleted", b.ID())
 	}
 
-	// 运行时 Get 或者 Wire 会出现下面这种情况。
-	if c.state == Refreshed && b.status == Wired {
+	// 已经注入完成的bean当作成功
+	if b.status == Wired {
+		stack.pushDependency(b)
 		return nil
 	}
 
-	haveDestroy := false
-
-	defer func() {
-		if haveDestroy {
-			stack.destroyers.Remove(stack.destroyers.Back())
-		}
-	}()
-
-	// 记录注入路径上的销毁函数及其执行的先后顺序。
-	if _, ok := b.Interface().(BeanDestroy); ok || b.destroy != nil {
-		haveDestroy = true
-		d := stack.saveDestroyer(b)
-		if i := stack.destroyers.Back(); i != nil {
-			d.after(i.Value.(*BeanDefinition))
-		}
-		stack.destroyers.PushBack(b)
-	}
-
-	stack.pushBack(b)
-
-	if b.status == Creating && b.f != nil {
-		prev := stack.beans[len(stack.beans)-2]
-		if prev.status == Creating {
-			return errors.New("found circle autowire")
-		}
-	}
-
+	// 如果该bean重复被注入说明发生了循环(间接)依赖
 	if b.status >= Creating {
-		stack.popBack()
-		return nil
+		// 对象bean可以部分支持循环引用，前提是开启循环引用支持
+		if b.f == nil && c.allowCircularReferences {
+			return nil
+		}
+		// 帮助展示循环依赖栈信息
+		stack.pushBack(b)
+		return errors.New("found circle autowire")
 	}
 
 	b.status = Creating
+
+	stack.pushBack(b)
 
 	// 对当前 bean 的间接依赖项进行注入。
 	for _, s := range b.depends {
@@ -674,22 +599,13 @@ func (c *container) wireBean(b *BeanDefinition, stack *wiringStack) error {
 		return err
 	}
 
-	if b.init != nil {
-		fnValue := reflect.ValueOf(b.init)
-		out := fnValue.Call([]reflect.Value{b.Value()})
-		if len(out) > 0 && !out[0].IsNil() {
-			return out[0].Interface().(error)
-		}
-	}
-
-	if f, ok := b.Interface().(BeanInit); ok {
-		if err = f.OnInit(c); err != nil {
-			return err
-		}
+	if err = b.constructor(c); nil != err {
+		return err
 	}
 
 	b.status = Wired
 	stack.popBack()
+	stack.pushDependency(b)
 	return nil
 }
 
@@ -803,11 +719,14 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 		}
 		if ok {
 			if strings.HasSuffix(tag, ",lazy") {
+				if !c.allowCircularReferences {
+					return fmt.Errorf("lazy field %s.%s require `AllowCircularReferences`", t.String(), ft.Name)
+				}
 				f := lazyField{v: fv, path: fieldPath, tag: tag}
 				stack.lazyFields = append(stack.lazyFields, f)
 			} else {
 				if ft.Type == contextType {
-					c.ContextAware = true
+					c.contextAware = true
 				}
 				if err := c.wireByTag(fv, tag, stack); err != nil {
 					return err //fmt.Errorf("%q wired error: %w", fieldPath, err)
@@ -934,7 +853,7 @@ func (c *container) getBean(v reflect.Value, tag wireTag, stack *wiringStack) er
 			}
 			if !found {
 				foundBeans = append(foundBeans, b)
-				c.logger.Sugar().Warnf("you should call Export() on %s", b)
+				//c.logger.Sugar().Warnf("you should call Export() on %s", b)
 			}
 		}
 	}
@@ -1143,20 +1062,22 @@ func (c *container) collectBeans(v reflect.Value, tags []wireTag, nullable bool,
 	return nil
 }
 
-// Close 关闭容器，此方法必须在 Refresh 之后调用。该方法会触发 ctx 的 Done 信
-// 号，然后等待所有 goroutine 结束，最后按照被依赖先销毁的原则执行所有的销毁函数。
+// Close 关闭容器，此方法必须在 Refresh 之后调用。按照被依赖先销毁的原则执行所有的销毁函数。
 func (c *container) Close() {
 
+	for _, bean := range c.Dependencies(false) {
+		bean.destructor()
+	}
+
+	c.logger.Info("container closed")
+}
+
+// Cancel 停止当前所有携程的运行，该方法会触发 ctx 的 Done 信号，然后等待所有 goroutine 结束
+func (c *container) Cancel() {
 	c.cancel()
 	c.wg.Wait()
 
 	c.logger.Info("goroutines exited")
-
-	for _, f := range c.destroyers {
-		f()
-	}
-
-	c.logger.Info("container closed")
 }
 
 // Go 创建安全可等待的 goroutine，fn 要求的 ctx 对象由 IoC 容器提供，当 IoC 容

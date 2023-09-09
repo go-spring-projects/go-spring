@@ -39,7 +39,7 @@ func TestInt32(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := u.OnRefresh(p, param)
-	assert.Error(t, err, "bind int32 error; .* resolve property \"int\" error; property \"int\" not exist")
+	assert.Error(t, err, "bind int32 error: property \"int\": not exist")
 
 	_ = p.Set("int", int32(3))
 

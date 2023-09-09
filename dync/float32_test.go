@@ -39,7 +39,7 @@ func TestFloat32(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := u.OnRefresh(p, param)
-	assert.Error(t, err, "bind float32 error; .* resolve property \"float\" error; property \"float\" not exist")
+	assert.Error(t, err, "bind float32 error: property \"float\": not exist")
 
 	_ = p.Set("float", float32(3))
 

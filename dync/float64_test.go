@@ -39,7 +39,7 @@ func TestFloat64(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := u.OnRefresh(p, param)
-	assert.Error(t, err, "bind float64 error; .* resolve property \"float\" error; property \"float\" not exist")
+	assert.Error(t, err, "bind float64 error: property \"float\": not exist")
 
 	_ = p.Set("float", float64(3))
 

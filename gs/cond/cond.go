@@ -30,6 +30,9 @@ import (
 	"github.com/limpo1989/go-spring/utils"
 )
 
+// UnimplementedMethod throws this error when calling an unimplemented method.
+var UnimplementedMethod = errors.New("unimplemented method")
+
 // Context defines some methods of IoC container that conditions use.
 type Context interface {
 	// Has returns whether the IoC container has a property.
@@ -118,7 +121,7 @@ func (c *onProperty) Matches(ctx Context) (bool, error) {
 
 	b, ok := r.(bool)
 	if !ok {
-		return false, utils.Wrapf(err, utils.FileLine(), "eval %q doesn't return bool", c.havingValue[3:])
+		return false, fmt.Errorf("eval %q doesn't return bool", c.havingValue[3:])
 	}
 	return b, nil
 }
@@ -168,7 +171,7 @@ type onExpression struct {
 }
 
 func (c *onExpression) Matches(ctx Context) (bool, error) {
-	return false, utils.UnimplementedMethod
+	return false, UnimplementedMethod
 }
 
 // Operator defines operation between conditions, including Or、And、None.
@@ -425,5 +428,5 @@ func OnProfile(profile string) *conditional {
 
 // OnProfile adds a Condition that returns true when property value equals to profile.
 func (c *conditional) OnProfile(profile string) *conditional {
-	return c.OnProperty("spring.profiles.active", HavingValue(profile))
+	return c.OnProperty("spring.config.profiles", HavingValue(profile))
 }

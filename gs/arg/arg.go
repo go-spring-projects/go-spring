@@ -125,7 +125,7 @@ func newArgList(fnType reflect.Type, args []Arg) (*argList, error) {
 			fnArgs = append(fnArgs, arg)
 		case IndexArg:
 			if arg.n < 0 || arg.n >= fixedArgCount {
-				return nil, utils.Errorf(utils.FileLine(), "arg index %d exceeds max index %d", arg.n, fixedArgCount)
+				return nil, fmt.Errorf("arg index %d exceeds max index %d", arg.n, fixedArgCount)
 			} else {
 				fnArgs[arg.n] = arg.arg
 			}
@@ -135,7 +135,7 @@ func newArgList(fnType reflect.Type, args []Arg) (*argList, error) {
 			} else if fnType.IsVariadic() {
 				fnArgs = append(fnArgs, arg)
 			} else {
-				return nil, utils.Errorf(utils.FileLine(), "function has no args but given %d", len(args))
+				return nil, fmt.Errorf("function has no args but given %d", len(args))
 			}
 		}
 	}
@@ -146,25 +146,25 @@ func newArgList(fnType reflect.Type, args []Arg) (*argList, error) {
 			fnArgs = append(fnArgs, arg)
 		case IndexArg:
 			if !shouldIndex {
-				return nil, utils.Errorf(utils.FileLine(), "the Args must have or have no index")
+				return nil, fmt.Errorf("the Args must have or have no index")
 			}
 			if arg.n < 0 || arg.n >= fixedArgCount {
-				return nil, utils.Errorf(utils.FileLine(), "arg index %d exceeds max index %d", arg.n, fixedArgCount)
+				return nil, fmt.Errorf("arg index %d exceeds max index %d", arg.n, fixedArgCount)
 			} else if fnArgs[arg.n] != nil {
-				return nil, utils.Errorf(utils.FileLine(), "found same index %d", arg.n)
+				return nil, fmt.Errorf("found same index %d", arg.n)
 			} else {
 				fnArgs[arg.n] = arg.arg
 			}
 		default:
 			if shouldIndex {
-				return nil, utils.Errorf(utils.FileLine(), "the Args must have or have no index")
+				return nil, fmt.Errorf("the Args must have or have no index")
 			}
 			if i < fixedArgCount {
 				fnArgs[i] = arg
 			} else if fnType.IsVariadic() {
 				fnArgs = append(fnArgs, arg)
 			} else {
-				return nil, utils.Errorf(utils.FileLine(), "the count %d of Args exceeds max index %d", len(args), fixedArgCount)
+				return nil, fmt.Errorf("the count %d of Args exceeds max index %d", len(args), fixedArgCount)
 			}
 		}
 	}
@@ -203,7 +203,7 @@ func (r *argList) get(ctx Context, fileLine string) ([]reflect.Value, error) {
 		// option arg may not return a value when the condition is not met.
 		v, err := r.getArg(ctx, arg, t, fileLine)
 		if err != nil {
-			return nil, err //utils.Wrapf(err, fileLine, "returns error when getting %d arg", idx)
+			return nil, fmt.Errorf("resolver method bean: %s at arg %d error: %w", fnType.String(), idx, err)
 		}
 		if v.IsValid() {
 			result = append(result, v)
@@ -233,9 +233,9 @@ func (r *argList) getArg(ctx Context, arg Arg, t reflect.Type, fileLine string) 
 	switch g := arg.(type) {
 	case *Callable:
 		if results, err := g.Call(ctx); err != nil {
-			return reflect.Value{}, utils.Wrapf(err, utils.FileLine(), "")
+			return reflect.Value{}, err
 		} else if len(results) < 1 {
-			return reflect.Value{}, errors.New("")
+			return reflect.Value{}, errors.New("no result returned")
 		} else {
 			return results[0], nil
 		}
@@ -275,7 +275,7 @@ func (r *argList) getArg(ctx Context, arg Arg, t reflect.Type, fileLine string) 
 		return v, nil
 	}
 
-	return reflect.Value{}, utils.Errorf(utils.FileLine(), "error type %s", t.String())
+	return reflect.Value{}, fmt.Errorf("error type %s", t.String())
 }
 
 // optionArg Option 函数的参数绑定。

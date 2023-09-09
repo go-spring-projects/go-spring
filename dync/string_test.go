@@ -39,7 +39,7 @@ func TestString(t *testing.T) {
 
 	p := conf.Map(nil)
 	err := u.OnRefresh(p, param)
-	assert.Error(t, err, "bind string error; .* resolve property \"s\" error; property \"s\" not exist")
+	assert.Error(t, err, "bind string error: property \"s\": not exist")
 
 	_ = p.Set("s", "abc")
 

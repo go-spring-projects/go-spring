@@ -131,7 +131,7 @@ type TestObject struct {
 	// 指定名称时使用精确匹配模式，不对数组元素进行转换，即便能做到似乎也无意义
 	InterfaceSliceByName []fmt.Stringer `autowire:"struct_ptr_slice?"`
 
-	MapTyType map[string]interface{} `inject:"?"`
+	//MapTyType map[string]interface{} `inject:"?"`
 	MapByName map[string]interface{} `autowire:"map?"`
 	MapByNam2 map[string]interface{} `autowire:"struct_ptr?"`
 }
@@ -149,7 +149,7 @@ func TestApplicationContext_AutoWireBeans(t *testing.T) {
 	err := runTest(c, func(p Context) {})
 	assert.Nil(t, err)
 
-	assert.Equal(t, len(obj.MapTyType), 4)
+	//assert.Equal(t, len(obj.MapTyType), 4)
 	assert.Equal(t, len(obj.MapByName), 0)
 	assert.Equal(t, len(obj.MapByNam2), 1)
 	fmt.Printf("%+v\n", obj)
@@ -694,7 +694,7 @@ func TestApplicationContext_Profile(t *testing.T) {
 	t.Run("bean:_c:test", func(t *testing.T) {
 		c := New()
 		p := conf.New()
-		p.Set("spring.profiles.active", "test")
+		p.Set("spring.config.profiles", "test")
 		c.Object(&BeanZero{5})
 		err := c.Properties().Refresh(p)
 		assert.Nil(t, err)
@@ -813,7 +813,7 @@ func NewManager() Manager {
 }
 
 func NewManagerRetError() (Manager, error) {
-	return localManager{}, utils.Error(utils.FileLine(), "error")
+	return localManager{}, fmt.Errorf("error")
 }
 
 func NewManagerRetErrorNil() (Manager, error) {
@@ -892,7 +892,7 @@ func TestApplicationContext_RegisterBeanFn2(t *testing.T) {
 		err := c.Properties().Refresh(p)
 		assert.Nil(t, err)
 		err = c.Refresh()
-		assert.Error(t, err, "gs_test.go:\\d* error")
+		assert.Error(t, err, "container refresh failed*")
 	})
 
 	t.Run("manager return error nil", func(t *testing.T) {
@@ -946,7 +946,7 @@ func (d *callDestroy) InitWithError() error {
 		d.inited = true
 		return nil
 	}
-	return utils.Error(utils.FileLine(), "error")
+	return fmt.Errorf("error")
 }
 
 func (d *callDestroy) DestroyWithError() error {
@@ -954,7 +954,7 @@ func (d *callDestroy) DestroyWithError() error {
 		d.destroyed = true
 		return nil
 	}
-	return utils.Error(utils.FileLine(), "error")
+	return fmt.Errorf("error")
 }
 
 type nestedCallDestroy struct {
@@ -1546,9 +1546,16 @@ func TestApplicationContext_RegisterMethodBean(t *testing.T) {
 				c := New()
 				p := conf.New()
 				p.Set("server.version", "1.0.0")
-				parent := c.Object(new(Server)).DependsOn("Service")
-				c.Provide((*Server).Consumer, parent.ID()).DependsOn("Server")
-				c.Object(new(Service))
+				var server = new(Server)
+				var service = new(Service)
+				parent := c.Provide(func(svc *Service) *Server {
+					if service != svc {
+						panic("invalid service")
+					}
+					return server
+				})
+				c.Provide((*Server).Consumer, parent.ID())
+				c.Object(service)
 
 				err := c.Properties().Refresh(p)
 				assert.Nil(t, err)
@@ -1705,15 +1712,23 @@ func TestApplicationContext_CircleAutowire(t *testing.T) {
 	// 直接创建的 Object 直接发生循环依赖是没有关系的。
 	t.Run("", func(t *testing.T) {
 		c := New()
-		c.Object(new(CircleA))
-		c.Object(new(CircleB))
-		c.Object(new(CircleC))
+		c.AllowCircularReferences()
+		var ca = new(CircleA)
+		var cb = new(CircleB)
+		var cc = new(CircleC)
+		c.Object(ca)
+		c.Object(cb)
+		c.Object(cc)
 		err := c.Refresh()
 		assert.Nil(t, err)
+		assert.Equal(t, ca.B, cb, "CircleB not equal")
+		assert.Equal(t, cb.C, cc, "CircleB not equal")
+		assert.Equal(t, cc.A, ca, "CircleB not equal")
 	})
 
 	t.Run("", func(t *testing.T) {
 		c := New()
+		c.AllowCircularReferences()
 		c.Object(new(CircleA))
 		c.Object(new(CircleB))
 		c.Provide(func() *CircleC {
@@ -1725,6 +1740,7 @@ func TestApplicationContext_CircleAutowire(t *testing.T) {
 
 	t.Run("", func(t *testing.T) {
 		c := New()
+		c.AllowCircularReferences()
 		c.Object(new(CircleA))
 		c.Provide(func() *CircleB {
 			return new(CircleB)
@@ -2362,7 +2378,7 @@ func TestDefaultSpringContext(t *testing.T) {
 	t.Run("bean:test_ctx:test", func(t *testing.T) {
 		c := New()
 		p := conf.New()
-		p.Set("spring.profiles.active", "test")
+		p.Set("spring.config.profiles", "test")
 		c.Object(&BeanZero{5}).On(cond.OnProfile("test"))
 
 		err := c.Properties().Refresh(p)
@@ -2378,7 +2394,7 @@ func TestDefaultSpringContext(t *testing.T) {
 	t.Run("bean:test_ctx:stable", func(t *testing.T) {
 		c := New()
 		p := conf.New()
-		p.Set("spring.profiles.active", "stable")
+		p.Set("spring.config.profiles", "stable")
 		c.Object(&BeanZero{5}).On(cond.OnProfile("test"))
 
 		err := c.Properties().Refresh(p)
@@ -2730,7 +2746,7 @@ func TestApplicationContext_Invoke(t *testing.T) {
 		p := conf.New()
 		c.Object(func() {})
 		p.Set("version", "v0.0.1")
-		p.Set("spring.profiles.active", "dev")
+		p.Set("spring.config.profiles", "dev")
 
 		err := c.Properties().Refresh(p)
 		assert.Nil(t, err)
@@ -2809,8 +2825,8 @@ func newCircularB() *circularB {
 func TestLazy(t *testing.T) {
 	for i := 0; i < 1; i++ {
 		c := New()
-		p := conf.New()
-		p.Set("spring.main.allow-circular-references", "true")
+		c.AllowCircularReferences()
+
 		c.Provide(newCircularA)
 		c.Provide(newCircularB)
 		d := struct {
@@ -2818,7 +2834,7 @@ func TestLazy(t *testing.T) {
 		}{}
 		c.Object(&d)
 
-		err := c.Properties().Refresh(p)
+		err := c.Properties().Refresh(conf.New())
 		assert.Nil(t, err)
 		err = c.Refresh()
 		assert.Nil(t, err)

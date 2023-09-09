@@ -230,21 +230,21 @@ func TestBind_InvalidValue(t *testing.T) {
 		c := make(chan int)
 		key := Key("chan")
 		err := Map(nil).Bind(&c, key)
-		assert.Error(t, err, ".* bind chan int error; target should be value type")
+		assert.Error(t, err, "bind chan int error: .*")
 	})
 
 	t.Run("array", func(t *testing.T) {
 		var s [3]int
 		key := Key("array")
 		err := Map(nil).Bind(&s, key)
-		assert.Error(t, err, ".* bind \\[3\\]int error; use slice instead of array")
+		assert.Error(t, err, "bind \\[3\\]int error: use slice instead of array")
 	})
 
 	t.Run("complex", func(t *testing.T) {
 		var c complex64
 		tag := Tag("${complex:=i+3}")
 		err := Map(nil).Bind(&c, tag)
-		assert.Error(t, err, "bind complex64 error; unsupported bind type \"complex64\"")
+		assert.Error(t, err, "bind complex64 error: unsupported bind type \"complex64\"")
 	})
 
 	t.Run("pointer", func(t *testing.T) {
@@ -252,7 +252,7 @@ func TestBind_InvalidValue(t *testing.T) {
 			PtrStruct *PtrStruct `value:"${ptr}"`
 		}
 		err := Map(nil).Bind(&s)
-		assert.Error(t, err, "bind .* error; target should be value type")
+		assert.Error(t, err, "bind .* error: target should be value type")
 	})
 }
 
@@ -279,7 +279,7 @@ func TestBind_SingleValue(t *testing.T) {
 
 		key := Key("uint")
 		err := Map(nil).Bind(&u, key)
-		assert.Error(t, err, "resolve property \\\"uint\\\" error; property \\\"uint\\\" not exist")
+		assert.Error(t, err, "bind uint error: property \"uint\": not exist")
 
 		tag := Tag("${uint:=3}")
 		err = Map(nil).Bind(&u, tag)
@@ -295,7 +295,7 @@ func TestBind_SingleValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"uint": "abc",
 		}).Bind(&u, tag)
-		assert.Error(t, err, "bind uint error; strconv.ParseUint: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind uint error: strconv.ParseUint: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("int", func(t *testing.T) {
@@ -303,7 +303,7 @@ func TestBind_SingleValue(t *testing.T) {
 
 		key := Key("int")
 		err := Map(nil).Bind(&i, key)
-		assert.Error(t, err, "resolve property \\\"int\\\" error; property \\\"int\\\" not exist")
+		assert.Error(t, err, "bind int error: property \"int\": not exist")
 
 		tag := Tag("${int:=3}")
 		err = Map(nil).Bind(&i, tag)
@@ -319,7 +319,7 @@ func TestBind_SingleValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"int": "abc",
 		}).Bind(&i, tag)
-		assert.Error(t, err, "bind int error; strconv.ParseInt: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind int error: strconv.ParseInt: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("float", func(t *testing.T) {
@@ -327,7 +327,7 @@ func TestBind_SingleValue(t *testing.T) {
 
 		key := Key("float")
 		err := Map(nil).Bind(&f, key)
-		assert.Error(t, err, "resolve property \\\"float\\\" error; property \\\"float\\\" not exist")
+		assert.Error(t, err, "bind float32 error: property \"float\": not exist")
 
 		tag := Tag("${float:=3}")
 		err = Map(nil).Bind(&f, tag)
@@ -343,7 +343,7 @@ func TestBind_SingleValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"float": "abc",
 		}).Bind(&f, tag)
-		assert.Error(t, err, "bind float32 error; strconv.ParseFloat: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind float32 error: strconv.ParseFloat: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("bool", func(t *testing.T) {
@@ -351,7 +351,7 @@ func TestBind_SingleValue(t *testing.T) {
 
 		key := Key("bool")
 		err := Map(nil).Bind(&b, key)
-		assert.Error(t, err, "resolve property \\\"bool\\\" error; property \\\"bool\\\" not exist")
+		assert.Error(t, err, "bind bool error: property \"bool\": not exist")
 
 		tag := Tag("${bool:=false}")
 		err = Map(nil).Bind(&b, tag)
@@ -367,7 +367,7 @@ func TestBind_SingleValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"bool": "abc",
 		}).Bind(&b, tag)
-		assert.Error(t, err, "bind bool error; strconv.ParseBool: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind bool error: strconv.ParseBool: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -390,11 +390,11 @@ func TestBind_SingleValue(t *testing.T) {
 
 		tag := Tag("${struct:=abc,123}")
 		err := Map(nil).Bind(&s, tag)
-		assert.Error(t, err, "bind .* error; struct can't have a non empty default value")
+		assert.Error(t, err, "bind .* error: struct can't have a non empty default value")
 
 		tag = Tag("${struct:=}")
 		err = Map(nil).Bind(&s, tag)
-		assert.Error(t, err, "resolve property \"struct\\.int\" error; property \"struct\\.int\" not exist")
+		assert.Error(t, err, "bind NestedStruct error: bind NestedStruct.CommonStruct error: bind NestedStruct.CommonStruct.Int error: property \"struct.int\": not exist")
 
 		tag = Tag("${struct:=}")
 		err = Map(map[string]interface{}{
@@ -407,7 +407,7 @@ func TestBind_SingleValue(t *testing.T) {
 				},
 			},
 		}).Bind(&s, tag)
-		assert.Error(t, err, "resolve property .* error; property \\\"struct.\\Struct\\.int\\\" not exist")
+		assert.Error(t, err, "bind NestedStruct error: bind NestedStruct.Struct error: bind NestedStruct.Struct.Int error: property \"struct.Struct.int\": not exist")
 
 		m := map[string]interface{}{
 			"struct": map[string]interface{}{
@@ -504,7 +504,7 @@ func TestBind_SliceValue(t *testing.T) {
 
 		key := Key("uints")
 		err := Map(nil).Bind(&u, key)
-		assert.Error(t, err, "bind \\[\\]uint error; .* property \\\"uints\\\"; not exist")
+		assert.Error(t, err, "bind \\[\\]uint error: property \"uints\": not exist")
 
 		tag := Tag("${uints:=1,2,3}")
 		err = Map(nil).Bind(&u, tag)
@@ -538,7 +538,7 @@ func TestBind_SliceValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"uints": "abc",
 		}).Bind(&u, tag)
-		assert.Error(t, err, "bind \\[\\]uint\\[0\\] error; strconv.ParseUint: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind \\[\\]uint error: bind \\[\\]uint\\[0\\] error: strconv.ParseUint: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("ints", func(t *testing.T) {
@@ -546,7 +546,7 @@ func TestBind_SliceValue(t *testing.T) {
 
 		key := Key("ints")
 		err := Map(nil).Bind(&i, key)
-		assert.Error(t, err, "bind \\[\\]int error; .* property \\\"ints\\\"; not exist")
+		assert.Error(t, err, "bind \\[\\]int error: property \"ints\": not exist")
 
 		tag := Tag("${ints:=1,2,3}")
 		err = Map(nil).Bind(&i, tag)
@@ -580,7 +580,7 @@ func TestBind_SliceValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"ints": "abc",
 		}).Bind(&i, tag)
-		assert.Error(t, err, "bind \\[\\]int\\[0\\] error; strconv.ParseInt: parsing \"abc\": invalid syntax")
+		assert.Error(t, err, "bind \\[\\]int error: bind \\[\\]int\\[0\\] error: strconv.ParseInt: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("floats", func(t *testing.T) {
@@ -588,7 +588,7 @@ func TestBind_SliceValue(t *testing.T) {
 
 		key := Key("floats")
 		err := Map(nil).Bind(&f, key)
-		assert.Error(t, err, "bind \\[\\]float32 error; .* property \\\"floats\\\"; not exist")
+		assert.Error(t, err, "bind \\[\\]float32 error: property \"floats\": not exist")
 
 		tag := Tag("${floats:=1,2,3}")
 		err = Map(nil).Bind(&f, tag)
@@ -622,7 +622,7 @@ func TestBind_SliceValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"floats": "abc",
 		}).Bind(&f, tag)
-		assert.Error(t, err, "bind \\[\\]float32\\[0\\] error; strconv.ParseFloat: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind \\[\\]float32 error: bind \\[\\]float32\\[0\\] error: strconv.ParseFloat: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("bools", func(t *testing.T) {
@@ -630,7 +630,7 @@ func TestBind_SliceValue(t *testing.T) {
 
 		key := Key("bools")
 		err := Map(nil).Bind(&b, key)
-		assert.Error(t, err, "bind \\[\\]bool error; .* property \\\"bools\\\"; not exist")
+		assert.Error(t, err, "bind \\[\\]bool error: property \"bools\": not exist")
 
 		tag := Tag("${bools:=false,true,false}")
 		err = Map(nil).Bind(&b, tag)
@@ -664,7 +664,7 @@ func TestBind_SliceValue(t *testing.T) {
 		err = Map(map[string]interface{}{
 			"bools": "abc",
 		}).Bind(&b, tag)
-		assert.Error(t, err, "bind \\[\\]bool\\[0\\] error; strconv.ParseBool: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind \\[\\]bool error: bind \\[\\]bool\\[0\\] error: strconv.ParseBool: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("strings", func(t *testing.T) {
@@ -699,7 +699,7 @@ func TestBind_SliceValue(t *testing.T) {
 
 		tag := Tag("${structs:=abc,cde,def}")
 		err := Map(nil).Bind(&s, tag)
-		assert.Error(t, err, "bind .* error; .* slice can't have a non empty default value")
+		assert.Error(t, err, "bind \\[\\]conf.CommonStruct error: slice can't have a non empty default value")
 
 		tag = Tag("${structs:=}")
 		err = Map(nil).Bind(&s, tag)
@@ -708,7 +708,7 @@ func TestBind_SliceValue(t *testing.T) {
 
 		tag = Tag("${structs}")
 		err = Map(nil).Bind(&s, tag)
-		assert.Error(t, err, "bind .* error; .* property \"structs\"; not exist")
+		assert.Error(t, err, "bind \\[\\]conf.CommonStruct error: property \"structs\": not exist")
 
 		err = Map(map[string]interface{}{
 			"structs[0]": map[string]interface{}{
@@ -789,7 +789,7 @@ func TestBind_MapValue(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"map": "abc",
 		}).Bind(&m, tag)
-		assert.Error(t, err, "bind .* error; property 'map' is value")
+		assert.Error(t, err, "bind map\\[string\\]uint error: property 'map' is value")
 	})
 
 	t.Run("error#2", func(t *testing.T) {
@@ -801,7 +801,7 @@ func TestBind_MapValue(t *testing.T) {
 				"b": "abc",
 			},
 		}).Bind(&m, tag)
-		assert.Error(t, err, "bind .* error; strconv.ParseUint: parsing \\\"abc\\\": invalid syntax")
+		assert.Error(t, err, "bind map\\[string\\]uint error: bind map\\[string\\]uint error: strconv.ParseUint: parsing \"abc\": invalid syntax")
 	})
 
 	t.Run("error#3", func(t *testing.T) {
@@ -810,7 +810,7 @@ func TestBind_MapValue(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"map": []uint{1, 2, 3},
 		}).Bind(&m, tag)
-		assert.Error(t, err, "resolve property \\\"map.0\\\" error; property \\\"map.0\\\" not exist")
+		assert.Error(t, err, "bind map\\[string\\]uint error: bind map\\[string\\]uint error: property \"map.0\": not exist")
 	})
 
 	t.Run("error#4", func(t *testing.T) {
@@ -819,7 +819,7 @@ func TestBind_MapValue(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"none": []int{1, 2, 3},
 		}).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; strconv.ParseInt: parsing \\\"\\\": invalid syntax")
+		assert.Error(t, err, "bind int error: strconv.ParseInt: parsing \"\": invalid syntax")
 	})
 
 	t.Run("uint", func(t *testing.T) {
@@ -827,7 +827,7 @@ func TestBind_MapValue(t *testing.T) {
 
 		tag := Tag("${map:=abc,123}")
 		err := Map(nil).Bind(&m, tag)
-		assert.Error(t, err, "bind map\\[string\\]uint error; map can't have a non empty default value")
+		assert.Error(t, err, "bind map\\[string\\]uint error: map can't have a non empty default value")
 
 		tag = Tag("${map:=}")
 		err = Map(nil).Bind(&m, tag)
@@ -866,7 +866,7 @@ func TestBind_MapValue(t *testing.T) {
 
 		tag := Tag("${map:=abc,123}")
 		err := Map(nil).Bind(&m, tag)
-		assert.Error(t, err, "bind map\\[string\\]int error; map can't have a non empty default value")
+		assert.Error(t, err, "bind map\\[string\\]int error: map can't have a non empty default value")
 
 		tag = Tag("${map:=}")
 		err = Map(nil).Bind(&m, tag)
@@ -905,7 +905,7 @@ func TestBind_MapValue(t *testing.T) {
 
 		tag := Tag("${map:=abc,123}")
 		err := Map(nil).Bind(&m, tag)
-		assert.Error(t, err, "bind map\\[string\\]float32 error; map can't have a non empty default value")
+		assert.Error(t, err, "bind map\\[string\\]float32 error: map can't have a non empty default value")
 
 		tag = Tag("${map:=}")
 		err = Map(nil).Bind(&m, tag)
@@ -944,7 +944,7 @@ func TestBind_MapValue(t *testing.T) {
 
 		tag := Tag("${map:=abc,123}")
 		err := Map(nil).Bind(&m, tag)
-		assert.Error(t, err, "bind map\\[string\\]string error; map can't have a non empty default value")
+		assert.Error(t, err, "bind map\\[string\\]string error: map can't have a non empty default value")
 
 		tag = Tag("${map:=}")
 		err = Map(nil).Bind(&m, tag)
@@ -983,7 +983,7 @@ func TestBind_MapValue(t *testing.T) {
 
 		tag := Tag("${map:=abc,123}")
 		err := Map(nil).Bind(&m, tag)
-		assert.Error(t, err, "bind .* error; map can't have a non empty default value")
+		assert.Error(t, err, "bind map\\[string\\]conf.CommonStruct error: map can't have a non empty default value")
 
 		tag = Tag("${map:=}")
 		err = Map(nil).Bind(&m, tag)
@@ -1037,14 +1037,14 @@ func TestBind_Validate(t *testing.T) {
 
 		tag := Key("s")
 		err := Map(nil).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \"\\$\\>\\=3\" for value 2")
+		assert.Error(t, err, "bind .* error: validate failed on \"\\$\\>\\=3\" for value 2")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
 				"uint": 1,
 			},
 		}).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \"\\$\\>\\=3\" for value 1")
+		assert.Error(t, err, "bind .* error: validate failed on \"\\$\\>\\=3\" for value 1")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
@@ -1062,14 +1062,14 @@ func TestBind_Validate(t *testing.T) {
 
 		tag := Key("s")
 		err := Map(nil).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \"\\$\\>\\=3\" for value 2")
+		assert.Error(t, err, "bind .* error: validate failed on \"\\$\\>\\=3\" for value 2")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
 				"int": 1,
 			},
 		}).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \"\\$\\>\\=3\" for value 1")
+		assert.Error(t, err, "bind .* error: validate failed on \"\\$\\>\\=3\" for value 1")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
@@ -1087,14 +1087,14 @@ func TestBind_Validate(t *testing.T) {
 
 		tag := Key("s")
 		err := Map(nil).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \"\\$\\>\\=3\" for value 2")
+		assert.Error(t, err, "bind .* error: validate failed on \"\\$\\>\\=3\" for value 2")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
 				"float": 1,
 			},
 		}).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \"\\$\\>\\=3\" for value 1")
+		assert.Error(t, err, "bind .* error: validate failed on \"\\$\\>\\=3\" for value 1")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
@@ -1112,14 +1112,14 @@ func TestBind_Validate(t *testing.T) {
 
 		tag := Key("s")
 		err := Map(nil).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \\\"len\\(\\$\\)\\>\\=6\\\" for value 123")
+		assert.Error(t, err, "bind .* error: validate failed on \\\"len\\(\\$\\)\\>\\=6\\\" for value 123")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
 				"string": "abc",
 			},
 		}).Bind(&v, tag)
-		assert.Error(t, err, "bind .* error; validate failed on \\\"len\\(\\$\\)\\>\\=6\\\" for value abc")
+		assert.Error(t, err, "bind .* error: validate failed on \\\"len\\(\\$\\)\\>\\=6\\\" for value abc")
 
 		err = Map(map[string]interface{}{
 			"s": map[string]interface{}{
@@ -1147,7 +1147,7 @@ func TestBind_StructValue(t *testing.T) {
 			value int `value:"a:=3"`
 		}
 		err := Map(nil).Bind(&s)
-		assert.Error(t, err, "bind .* error; parse tag 'a:=3' error: invalid syntax")
+		assert.Error(t, err, "bind .* error: parse tag 'a:=3' error: invalid syntax")
 	})
 }
 
@@ -1168,7 +1168,7 @@ func TestBind_StructFilter(t *testing.T) {
 			return false, errors.New("this is an error")
 		}
 		err = BindValue(p, v, v.Type(), param, filter)
-		assert.Error(t, err, "bind .* error; this is an error")
+		assert.Error(t, err, "bind .* error: this is an error")
 	})
 
 	t.Run("filtered", func(t *testing.T) {
@@ -1221,7 +1221,7 @@ func TestBind_Splitter(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"s": "1;2;3",
 		}).Bind(&s, Tag("${s}||splitter"))
-		assert.Error(t, err, "bind \\[\\]int error; .* error splitter 'splitter'")
+		assert.Error(t, err, "bind \\[\\]int error: error splitter 'splitter'")
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -1234,7 +1234,7 @@ func TestBind_Splitter(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"s": "1;2;3",
 		}).Bind(&s, Tag("${s}||splitter"))
-		assert.Error(t, err, "bind \\[\\]int error; .* split error; this is an error")
+		assert.Error(t, err, "bind \\[\\]int error: split error: this is an error")
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -1261,7 +1261,7 @@ func TestBind_Converter(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"point": "[1,2]",
 		}).Bind(&s)
-		assert.Error(t, err, "bind .* error; illegal format")
+		assert.Error(t, err, "bind .* error: illegal format")
 	})
 
 	t.Run("success", func(t *testing.T) {
@@ -1292,7 +1292,7 @@ func TestBind_ReflectValue(t *testing.T) {
 		err := Map(map[string]interface{}{
 			"int": 1,
 		}).Bind(v, Key("int"))
-		assert.Error(t, err, "bind \\*int error; target should be value type")
+		assert.Error(t, err, "bind \\*int error: target should be value type")
 	})
 
 	t.Run("success", func(t *testing.T) {
