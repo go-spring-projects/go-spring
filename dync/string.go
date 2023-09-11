@@ -18,21 +18,29 @@ package dync
 
 import (
 	"encoding/json"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*String)(nil)
+var _ conf.Value = (*String)(nil)
 
 // A String is an atomic string value that can be dynamic refreshed.
 type String struct {
-	v atomic.String
+	v atomic.Value
+}
+
+// Store atomically stores val.
+func (x *String) Store(v string) {
+	x.v.Store(v)
 }
 
 // Value returns the stored string value.
 func (x *String) Value() string {
-	return x.v.Load()
+	if v := x.v.Load(); nil != v {
+		return v.(string)
+	}
+	return ""
 }
 
 // OnRefresh refreshes the stored value.

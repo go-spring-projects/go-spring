@@ -18,22 +18,27 @@ package dync
 
 import (
 	"encoding/json"
+	"sync/atomic"
 	"time"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Duration)(nil)
+var _ conf.Value = (*Duration)(nil)
 
 // A Duration is an atomic time.Duration value that can be dynamic refreshed.
 type Duration struct {
-	v atomic.Duration
+	v atomic.Int64
+}
+
+// Store atomically stores val.
+func (x *Duration) Store(v time.Duration) {
+	x.v.Store(int64(v))
 }
 
 // Value returns the stored time.Duration value.
 func (x *Duration) Value() time.Duration {
-	return x.v.Load()
+	return time.Duration(x.v.Load())
 }
 
 // OnRefresh refreshes the stored value.
@@ -42,7 +47,7 @@ func (x *Duration) OnRefresh(p *conf.Properties, param conf.BindParam) error {
 	if err := p.Bind(&d, conf.Param(param)); err != nil {
 		return err
 	}
-	x.v.Store(d)
+	x.v.Store(int64(d))
 	return nil
 }
 

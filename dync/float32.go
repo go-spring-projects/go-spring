@@ -18,21 +18,27 @@ package dync
 
 import (
 	"encoding/json"
+	"math"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Float32)(nil)
+var _ conf.Value = (*Float32)(nil)
 
 // A Float32 is an atomic float32 value that can be dynamic refreshed.
 type Float32 struct {
-	v atomic.Float32
+	v atomic.Uint32
+}
+
+// Store atomically stores val.
+func (x *Float32) Store(v float32) {
+	x.v.Store(math.Float32bits(v))
 }
 
 // Value returns the stored float32 value.
 func (x *Float32) Value() float32 {
-	return x.v.Load()
+	return math.Float32frombits(x.v.Load())
 }
 
 // OnRefresh refreshes the stored value.
@@ -41,7 +47,7 @@ func (x *Float32) OnRefresh(p *conf.Properties, param conf.BindParam) error {
 	if err := p.Bind(&f, conf.Param(param)); err != nil {
 		return err
 	}
-	x.v.Store(f)
+	x.v.Store(math.Float32bits(f))
 	return nil
 }
 

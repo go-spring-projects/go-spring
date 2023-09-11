@@ -19,42 +19,39 @@ package dync
 import (
 	"encoding/json"
 	"sync/atomic"
-	"time"
 
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ conf.Value = (*Time)(nil)
+var _ conf.Value = (*Map[int, any])(nil)
 
-// A Time is an atomic time.Time value that can be dynamic refreshed.
-type Time struct {
-	v atomic.Value
+type Map[K comparable, V any] struct {
+	v atomic.Pointer[map[K]V]
 }
 
 // Store atomically stores val.
-func (x *Time) Store(v time.Time) {
-	x.v.Store(v)
+func (x *Map[K, V]) Store(v map[K]V) {
+	x.v.Store(&v)
 }
 
-// Value returns the stored time.Time value.
-func (x *Time) Value() time.Time {
-	if v, ok := x.v.Load().(time.Time); ok {
-		return v
+// Value returns the stored map[K]V value.
+func (x *Map[K, V]) Value() map[K]V {
+	if v := x.v.Load(); nil != v {
+		return *v
 	}
-	return time.Time{}
-}
-
-// OnRefresh refreshes the stored value.
-func (x *Time) OnRefresh(p *conf.Properties, param conf.BindParam) error {
-	var t time.Time
-	if err := p.Bind(&t, conf.Param(param)); err != nil {
-		return err
-	}
-	x.v.Store(t)
 	return nil
 }
 
-// MarshalJSON returns the JSON encoding of x.
-func (x *Time) MarshalJSON() ([]byte, error) {
+// OnRefresh refreshes the stored value.
+func (x *Map[K, V]) OnRefresh(p *conf.Properties, param conf.BindParam) error {
+	var m map[K]V
+	if err := p.Bind(&m, conf.Param(param)); err != nil {
+		return err
+	}
+	x.v.Store(&m)
+	return nil
+}
+
+func (x *Map[K, V]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(x.Value())
 }

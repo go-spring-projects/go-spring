@@ -18,16 +18,21 @@ package dync
 
 import (
 	"encoding/json"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Uint64)(nil)
+var _ conf.Value = (*Uint64)(nil)
 
 // An Uint64 is an atomic uint64 value that can be dynamic refreshed.
 type Uint64 struct {
 	v atomic.Uint64
+}
+
+// Store atomically stores val.
+func (x *Uint64) Store(v uint64) {
+	x.v.Store(v)
 }
 
 // Value returns the stored uint64 value.

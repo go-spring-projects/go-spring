@@ -154,7 +154,7 @@ func BindValue(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 			return fmt.Errorf("bind %s error: %w", param.Path, err)
 		}
 
-		if err = Validate(param.Validate, out[0]); nil != err {
+		if err = Validate(param.Validate, out[0].Interface()); nil != err {
 			return fmt.Errorf("validate %s error: %w", param.Path, err)
 		}
 

@@ -18,16 +18,21 @@ package dync
 
 import (
 	"encoding/json"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Int64)(nil)
+var _ conf.Value = (*Int64)(nil)
 
 // An Int64 is an atomic int64 value that can be dynamic refreshed.
 type Int64 struct {
 	v atomic.Int64
+}
+
+// Store atomically stores val.
+func (x *Int64) Store(v int64) {
+	x.v.Store(v)
 }
 
 // Value returns the stored int64 value.

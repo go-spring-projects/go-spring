@@ -18,16 +18,21 @@ package dync
 
 import (
 	"encoding/json"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Uint32)(nil)
+var _ conf.Value = (*Uint32)(nil)
 
 // An Uint32 is an atomic uint32 value that can be dynamic refreshed.
 type Uint32 struct {
 	v atomic.Uint32
+}
+
+// Store atomically stores val.
+func (x *Uint32) Store(v uint32) {
+	x.v.Store(v)
 }
 
 // Value returns the stored uint32 value.

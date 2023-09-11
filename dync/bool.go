@@ -18,16 +18,21 @@ package dync
 
 import (
 	"encoding/json"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Bool)(nil)
+var _ conf.Value = (*Bool)(nil)
 
 // A Bool is an atomic bool value that can be dynamic refreshed.
 type Bool struct {
 	v atomic.Bool
+}
+
+// Store atomically stores val.
+func (x *Bool) Store(v bool) {
+	x.v.Store(v)
 }
 
 // Value returns the stored bool value.

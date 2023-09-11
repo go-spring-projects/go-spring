@@ -14,28 +14,41 @@
  * limitations under the License.
  */
 
-package atomic
+package dync
 
 import (
+	"encoding/json"
 	"sync/atomic"
+
+	"github.com/limpo1989/go-spring/conf"
 )
 
-type MarshalValue func(interface{}) ([]byte, error)
+var _ conf.Value = (*Value[any])(nil)
 
-// A Value provides an atomic load and store of a consistently typed value.
-type Value struct {
-	_ nocopy
-	atomic.Value
-
-	marshalJSON MarshalValue
+type Value[T any] struct {
+	v atomic.Pointer[T]
 }
 
-// SetMarshalJSON sets the JSON encoding handler for x.
-func (x *Value) SetMarshalJSON(fn MarshalValue) {
-	x.marshalJSON = fn
+// Store atomically stores val.
+func (x *Value[T]) Store(v *T) {
+	x.v.Store(v)
 }
 
-// MarshalJSON returns the JSON encoding of x.
-func (x *Value) MarshalJSON() ([]byte, error) {
-	return x.marshalJSON(x.Load())
+// Value returns the stored value.
+func (x *Value[T]) Value() *T {
+	return x.v.Load()
+}
+
+// OnRefresh refreshes the stored value.
+func (x *Value[T]) OnRefresh(p *conf.Properties, param conf.BindParam) error {
+	var v T
+	if err := p.Bind(&v, conf.Param(param)); nil != err {
+		return err
+	}
+	x.v.Store(&v)
+	return nil
+}
+
+func (x *Value[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(x.Value())
 }

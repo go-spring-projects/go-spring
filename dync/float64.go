@@ -18,21 +18,27 @@ package dync
 
 import (
 	"encoding/json"
+	"math"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 )
 
-var _ Value = (*Float64)(nil)
+var _ conf.Value = (*Float64)(nil)
 
 // A Float64 is an atomic float64 value that can be dynamic refreshed.
 type Float64 struct {
-	v atomic.Float64
+	v atomic.Uint64
+}
+
+// Store atomically stores val.
+func (x *Float64) Store(v float64) {
+	x.v.Store(math.Float64bits(v))
 }
 
 // Value returns the stored float64 value.
 func (x *Float64) Value() float64 {
-	return x.v.Load()
+	return math.Float64frombits(x.v.Load())
 }
 
 // OnRefresh refreshes the stored value.
@@ -41,7 +47,7 @@ func (x *Float64) OnRefresh(p *conf.Properties, param conf.BindParam) error {
 	if err := p.Bind(&f, conf.Param(param)); err != nil {
 		return err
 	}
-	x.v.Store(f)
+	x.v.Store(math.Float64bits(f))
 	return nil
 }
 

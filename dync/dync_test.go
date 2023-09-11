@@ -52,17 +52,17 @@ func TestProperties(t *testing.T) {
 }
 
 type Config struct {
-	Int   Int64   `value:"${int:=3}" expr:"$<6"`
-	Float Float64 `value:"${float:=1.2}"`
-	Map   Ref     `value:"${map:=}"`
-	Slice Ref     `value:"${slice:=}"`
+	Int   Int64               `value:"${int:=3}" expr:"$<6"`
+	Float Float64             `value:"${float:=1.2}"`
+	Map   Map[string, string] `value:"${map:=}"`
+	Slice Array[string]       `value:"${slice:=}"`
 }
 
 func newTest() (*Properties, *Config, error) {
 	p := New()
 	cfg := new(Config)
-	cfg.Slice.Init(make([]string, 0))
-	cfg.Map.Init(make(map[string]string))
+	cfg.Slice.Store(make([]string, 0))
+	cfg.Map.Store(make(map[string]string))
 	err := p.BindValue(reflect.ValueOf(cfg), conf.BindParam{})
 	if err != nil {
 		return nil, nil, err
@@ -114,8 +114,8 @@ func TestDynamic(t *testing.T) {
 		assert.Nil(t, err)
 
 		cfg := new(Config)
-		cfg.Slice.Init(make([]string, 0))
-		cfg.Map.Init(make(map[string]string))
+		cfg.Slice.Store(make([]string, 0))
+		cfg.Map.Store(make(map[string]string))
 		err = p.BindValue(reflect.ValueOf(cfg), conf.BindParam{})
 		assert.Error(t, err, "parsing \\\"abc.123\\\": invalid syntax")
 

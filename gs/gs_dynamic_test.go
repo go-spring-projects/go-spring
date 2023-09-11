@@ -26,10 +26,10 @@ import (
 )
 
 type DynamicConfig struct {
-	Int   dync.Int64   `value:"${int:=3}" expr:"$<6"`
-	Float dync.Float64 `value:"${float:=1.2}"`
-	Map   dync.Ref     `value:"${map:=}"`
-	Slice dync.Ref     `value:"${slice:=}"`
+	Int   dync.Int64               `value:"${int:=3}" expr:"$<6"`
+	Float dync.Float64             `value:"${float:=1.2}"`
+	Map   dync.Map[string, string] `value:"${map:=}"`
+	Slice dync.Array[string]       `value:"${slice:=}"`
 }
 
 type DynamicConfigWrapper struct {
@@ -41,15 +41,15 @@ func TestDynamic(t *testing.T) {
 	c := New()
 
 	wrapper := new(DynamicConfigWrapper)
-	wrapper.Wrapper.Slice.Init(make([]string, 0))
-	wrapper.Wrapper.Map.Init(make(map[string]string))
+	wrapper.Wrapper.Slice.Store(make([]string, 0))
+	wrapper.Wrapper.Map.Store(make(map[string]string))
 	c.Object(wrapper)
 
 	var cfg *DynamicConfig
 	c.Provide(func() *DynamicConfig {
 		config := new(DynamicConfig)
-		config.Slice.Init(make([]string, 0))
-		config.Map.Init(make(map[string]string))
+		config.Slice.Store(make([]string, 0))
+		config.Map.Store(make(map[string]string))
 		return config
 	}).Init(func(config *DynamicConfig) {
 		cfg = config

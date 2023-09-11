@@ -1,6 +1,6 @@
 module github.com/limpo1989/go-spring
 
-go 1.14
+go 1.18
 
 require (
 	github.com/antonmedv/expr v1.14.3
@@ -11,3 +11,5 @@ require (
 	go.uber.org/zap v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+require go.uber.org/multierr v1.10.0 // indirect

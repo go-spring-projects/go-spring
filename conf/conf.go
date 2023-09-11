@@ -101,6 +101,11 @@ func RegisterConverter(fn utils.Converter) {
 	converters[t.Out(0)] = fn
 }
 
+// A Value represents a refreshable type.
+type Value interface {
+	OnRefresh(p *Properties, param BindParam) error
+}
+
 // Properties stores the data with map[string]string and the keys are case-sensitive,
 // you can get one of them by its key, or bind some of them to a value.
 // There are too many formats of configuration files, and too many conflicts between

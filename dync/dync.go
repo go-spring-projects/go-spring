@@ -20,20 +20,15 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/atomic"
 	"github.com/limpo1989/go-spring/conf"
 	"github.com/limpo1989/go-spring/utils"
 )
 
-// A Value represents a refreshable type.
-type Value interface {
-	OnRefresh(p *conf.Properties, param conf.BindParam) error
-}
-
 // A Field represents a refreshable struct field.
 type Field struct {
-	value Value
+	value conf.Value
 	param conf.BindParam
 }
 
@@ -194,7 +189,7 @@ func (p *Properties) BindValue(v reflect.Value, param conf.BindParam) error {
 
 func (p *Properties) bindValue(i interface{}, param conf.BindParam) (bool, error) {
 
-	v, ok := i.(Value)
+	v, ok := i.(conf.Value)
 	if !ok {
 		return false, nil
 	}

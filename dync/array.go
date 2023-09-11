@@ -14,33 +14,44 @@
  * limitations under the License.
  */
 
-package atomic
+package dync
 
 import (
 	"encoding/json"
 	"sync/atomic"
+
+	"github.com/limpo1989/go-spring/conf"
 )
 
-// A String is an atomic string value.
-type String struct {
-	_ nocopy
-	v atomic.Value
+var _ conf.Value = (*Array[any])(nil)
+
+type Array[T any] struct {
+	v atomic.Pointer[[]T]
 }
 
-// Load atomically loads and returns the value stored in x.
-func (x *String) Load() string {
-	if r := x.v.Load(); r != nil {
-		return r.(string)
+// Store atomically stores val.
+func (x *Array[T]) Store(v []T) {
+	x.v.Store(&v)
+}
+
+// Value returns the stored []T value.
+func (x *Array[T]) Value() []T {
+	if v := x.v.Load(); nil != v {
+		return *v
 	}
-	return ""
+	return []T{}
 }
 
-// Store atomically stores val into x.
-func (x *String) Store(val string) {
-	x.v.Store(val)
+// OnRefresh refreshes the stored value.
+func (x *Array[T]) OnRefresh(p *conf.Properties, param conf.BindParam) error {
+	var array []T
+	if err := p.Bind(&array, conf.Param(param)); err != nil {
+		return err
+	}
+	x.v.Store(&array)
+	return nil
 }
 
-// MarshalJSON returns the JSON encoding of x.
-func (x *String) MarshalJSON() ([]byte, error) {
-	return json.Marshal(x.Load())
+func (x *Array[T]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(x.Value())
 }

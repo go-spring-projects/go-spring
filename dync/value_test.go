@@ -25,18 +25,10 @@ import (
 	"github.com/limpo1989/go-spring/utils/assert"
 )
 
-func TestRef_Uint32(t *testing.T) {
+func TestValue_Uint32(t *testing.T) {
 
-	var r Ref
-	assert.Equal(t, r.Value(), nil)
-
-	r.Init(uint32(0))
-
-	var count int
-	r.OnEvent = func() error {
-		count++
-		return nil
-	}
+	var r Value[uint32]
+	assert.Equal(t, r.Value(), (*uint32)(nil))
 
 	param := conf.BindParam{
 		Key:  "uint",
@@ -49,43 +41,32 @@ func TestRef_Uint32(t *testing.T) {
 	p := conf.Map(nil)
 	err := r.OnRefresh(p, param)
 	assert.Error(t, err, "bind uint32 error: property \"uint\": not exist")
-	assert.Equal(t, count, 0)
+	assert.Equal(t, r.Value(), (*uint32)(nil))
 
 	_ = p.Set("uint", uint32(3))
 
 	param.Validate = `expr:"$>5"`
 	err = r.OnRefresh(p, param)
 	assert.Error(t, err, "validate failed on \"\\$\\>5\" for value 3")
-	assert.Equal(t, count, 0)
+	assert.Equal(t, r.Value(), (*uint32)(nil))
 
 	param.Validate = ""
 	err = r.OnRefresh(p, param)
-	assert.Equal(t, r.Value(), uint32(3))
-	assert.Equal(t, count, 1)
+	assert.Equal(t, *r.Value(), uint32(3))
 
-	r.OnEvent = nil
 	param.Validate = ""
 	err = r.OnRefresh(p, param)
-	assert.Equal(t, r.Value(), uint32(3))
-	assert.Equal(t, count, 1)
+	assert.Equal(t, *r.Value(), uint32(3))
 
 	b, err := json.Marshal(&r)
 	assert.Nil(t, err)
 	assert.Equal(t, string(b), "3")
 }
 
-func TestRef_Duration(t *testing.T) {
+func TestValue_Duration(t *testing.T) {
 
-	var r Ref
-	assert.Equal(t, r.Value(), nil)
-
-	r.Init(time.Duration(0))
-
-	var count int
-	r.OnEvent = func() error {
-		count++
-		return nil
-	}
+	var r Value[time.Duration]
+	assert.Equal(t, r.Value(), (*time.Duration)(nil))
 
 	param := conf.BindParam{
 		Key:  "d",
@@ -98,32 +79,23 @@ func TestRef_Duration(t *testing.T) {
 	p := conf.Map(nil)
 	err := r.OnRefresh(p, param)
 	assert.Error(t, err, "bind Duration error: property \"d\": not exist")
-	assert.Equal(t, count, 0)
+	assert.Equal(t, r.Value(), (*time.Duration)(nil))
 
 	_ = p.Set("d", "10s")
 
 	param.Validate = ""
 	err = r.OnRefresh(p, param)
-	assert.Equal(t, r.Value(), 10*time.Second)
-	assert.Equal(t, count, 1)
+	assert.Equal(t, *r.Value(), 10*time.Second)
 
 	b, err := json.Marshal(&r)
 	assert.Nil(t, err)
 	assert.Equal(t, string(b), "10000000000")
 }
 
-func TestRef_Time(t *testing.T) {
+func TestValue_Time(t *testing.T) {
 
-	var r Ref
-	assert.Equal(t, r.Value(), nil)
-
-	r.Init(time.Time{})
-
-	var count int
-	r.OnEvent = func() error {
-		count++
-		return nil
-	}
+	var r Value[time.Time]
+	assert.Equal(t, r.Value(), (*time.Time)(nil))
 
 	param := conf.BindParam{
 		Key:  "time",
@@ -136,20 +108,17 @@ func TestRef_Time(t *testing.T) {
 	p := conf.Map(nil)
 	err := r.OnRefresh(p, param)
 	assert.Error(t, err, "bind Time error: property \"time\": not exist")
-	assert.Equal(t, count, 0)
+	assert.Equal(t, r.Value(), (*time.Time)(nil))
 
 	_ = p.Set("time", "2017-06-17 13:20:15 UTC")
 
 	param.Validate = "" // TODO validate
 	err = r.OnRefresh(p, param)
 	assert.Nil(t, err)
-	assert.Equal(t, count, 1)
 
-	r.OnEvent = nil
 	param.Validate = ""
 	err = r.OnRefresh(p, param)
-	assert.Equal(t, r.Value(), time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC))
-	assert.Equal(t, count, 1)
+	assert.Equal(t, *r.Value(), time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC))
 
 	b, err := json.Marshal(&r)
 	assert.Nil(t, err)
