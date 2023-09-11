@@ -153,6 +153,11 @@ func BindValue(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 			err = out[1].Interface().(error)
 			return fmt.Errorf("bind %s error: %w", param.Path, err)
 		}
+
+		if err = Validate(param.Validate, out[0]); nil != err {
+			return fmt.Errorf("validate %s error: %w", param.Path, err)
+		}
+
 		v.Set(out[0])
 		return nil
 	}
@@ -162,7 +167,7 @@ func BindValue(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 		var u uint64
 		if u, err = strconv.ParseUint(val, 0, 0); err == nil {
 			if err = Validate(param.Validate, u); err != nil {
-				return err
+				return fmt.Errorf("validate %s error: %w", param.Path, err)
 			}
 			v.SetUint(u)
 			return nil
@@ -172,7 +177,7 @@ func BindValue(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 		var i int64
 		if i, err = strconv.ParseInt(val, 0, 0); err == nil {
 			if err = Validate(param.Validate, i); err != nil {
-				return err
+				return fmt.Errorf("validate %s error: %w", param.Path, err)
 			}
 			v.SetInt(i)
 			return nil
@@ -182,7 +187,7 @@ func BindValue(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 		var f float64
 		if f, err = strconv.ParseFloat(val, 64); err == nil {
 			if err = Validate(param.Validate, f); err != nil {
-				return err
+				return fmt.Errorf("validate %s error: %w", param.Path, err)
 			}
 			v.SetFloat(f)
 			return nil
@@ -191,13 +196,16 @@ func BindValue(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 	case reflect.Bool:
 		var b bool
 		if b, err = strconv.ParseBool(val); err == nil {
+			if err = Validate(param.Validate, b); err != nil {
+				return fmt.Errorf("validate %s error: %w", param.Path, err)
+			}
 			v.SetBool(b)
 			return nil
 		}
 		return fmt.Errorf("bind %s error: %w", param.Path, err)
 	case reflect.String:
 		if err = Validate(param.Validate, val); err != nil {
-			return err
+			return fmt.Errorf("validate %s error: %w", param.Path, err)
 		}
 		v.SetString(val)
 		return nil
@@ -217,9 +225,9 @@ func bindSlice(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 	}
 
 	slice := reflect.MakeSlice(t, 0, 0)
-	defer func() { v.Set(slice) }()
 
 	if p == nil {
+		v.Set(slice)
 		return nil
 	}
 
@@ -238,6 +246,12 @@ func bindSlice(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 		}
 		slice = reflect.Append(slice, e)
 	}
+
+	if err = Validate(param.Validate, slice.Interface()); nil != err {
+		return fmt.Errorf("validate %s error: %w", param.Path, err)
+	}
+
+	v.Set(slice)
 	return nil
 }
 
@@ -306,7 +320,6 @@ func bindMap(p *Properties, v reflect.Value, t reflect.Type, param BindParam, fi
 
 	et := t.Elem()
 	ret := reflect.MakeMap(t)
-	defer func() { v.Set(ret) }()
 
 	keys, err := p.storage.SubKeys(param.Key)
 	if err != nil {
@@ -329,6 +342,12 @@ func bindMap(p *Properties, v reflect.Value, t reflect.Type, param BindParam, fi
 		}
 		ret.SetMapIndex(reflect.ValueOf(key), e)
 	}
+
+	if err = Validate(param.Validate, ret.Interface()); nil != err {
+		return fmt.Errorf("validate %s error: %w", param.Path, err)
+	}
+
+	v.Set(ret)
 	return nil
 }
 
