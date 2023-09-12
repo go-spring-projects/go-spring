@@ -31,17 +31,17 @@ import (
 type beanStatus int8
 
 const (
-	Deleted   = beanStatus(-1)   // 已删除
-	Default   = beanStatus(iota) // 未处理
-	Resolving                    // 正在决议
-	Resolved                     // 已决议
-	Creating                     // 正在创建
-	Created                      // 已创建
-	Wired                        // 注入完成
+	Deleted = beanStatus(-1)
+	Default = beanStatus(iota)
+	Resolving
+	Resolved
+	Creating
+	Created
+	Wired
 )
 
-func getStatusString(status beanStatus) string {
-	switch status {
+func (s beanStatus) String() string {
+	switch s {
 	case Deleted:
 		return "Deleted"
 	case Default:
@@ -73,7 +73,7 @@ type BeanDestroy interface {
 	OnDestroy()
 }
 
-// BeanDefinition bean 元数据。
+// BeanDefinition bean.
 type BeanDefinition struct {
 
 	// 原始类型的全限定名
@@ -98,52 +98,52 @@ type BeanDefinition struct {
 	exports []reflect.Type       // 导出的接口
 }
 
-// Type 返回 bean 的类型。
+// Type Return the type of the bean.
 func (d *BeanDefinition) Type() reflect.Type {
 	return d.t
 }
 
-// Value 返回 bean 的值。
+// Value Return the value of the bean.
 func (d *BeanDefinition) Value() reflect.Value {
 	return d.v
 }
 
-// Interface 返回 bean 的真实值。
+// Interface Return the actual value of the bean.
 func (d *BeanDefinition) Interface() interface{} {
 	return d.v.Interface()
 }
 
-// ID 返回 bean 的 ID 。
+// ID Return the ID of the bean.
 func (d *BeanDefinition) ID() string {
 	return d.typeName + ":" + d.name
 }
 
-// BeanName 返回 bean 的名称。
+// BeanName Return the name of the bean.
 func (d *BeanDefinition) BeanName() string {
 	return d.name
 }
 
-// TypeName 返回 bean 的原始类型的全限定名。
+// TypeName Return the fully qualified name of the bean's original type.
 func (d *BeanDefinition) TypeName() string {
 	return d.typeName
 }
 
-// Created 返回是否已创建。
+// Created Return whether the bean has been created or not.
 func (d *BeanDefinition) Created() bool {
 	return d.status >= Created
 }
 
-// Wired 返回 bean 是否已经注入。
+// Wired Return whether the bean has been injected or not.
 func (d *BeanDefinition) Wired() bool {
 	return d.status == Wired
 }
 
-// FileLine 返回 bean 的注册点。
+// FileLine Return the registration file:line of a bean.
 func (d *BeanDefinition) FileLine() string {
 	return fmt.Sprintf("%s:%d", d.file, d.line)
 }
 
-// getClass 返回 bean 的类型描述。
+// getClass Return the type description of a bean.
 func (d *BeanDefinition) getClass() string {
 	if d.f == nil {
 		return "object bean"
@@ -155,7 +155,7 @@ func (d *BeanDefinition) String() string {
 	return fmt.Sprintf("%s %q %s", d.getClass(), d.ID(), d.FileLine())
 }
 
-// Match 测试 bean 的类型全限定名和 bean 的名称是否都匹配。
+// Match Test if the fully qualified name of a bean's type and its name both match.
 func (d *BeanDefinition) Match(typeName string, beanName string) bool {
 
 	typeIsSame := false
@@ -171,31 +171,31 @@ func (d *BeanDefinition) Match(typeName string, beanName string) bool {
 	return typeIsSame && nameIsSame
 }
 
-// Name 设置 bean 的名称。
+// Name Set the bean name.
 func (d *BeanDefinition) Name(name string) *BeanDefinition {
 	d.name = name
 	return d
 }
 
-// On 设置 bean 的 Condition。
+// On Set the condition for a bean.
 func (d *BeanDefinition) On(cond cond.Condition) *BeanDefinition {
 	d.cond = cond
 	return d
 }
 
-// Order 设置 bean 的排序序号，值越小顺序越靠前(优先级越高)。
+// Order Set the sorting order for a bean, where a smaller value indicates a higher priority or an earlier position in the order.
 func (d *BeanDefinition) Order(order float32) *BeanDefinition {
 	d.order = order
 	return d
 }
 
-// DependsOn 设置 bean 的间接依赖项。
+// DependsOn Set the indirect dependencies for a bean.
 func (d *BeanDefinition) DependsOn(selectors ...utils.BeanSelector) *BeanDefinition {
 	d.depends = append(d.depends, selectors...)
 	return d
 }
 
-// Primary 设置 bean 为主版本。
+// Primary mark primary.
 func (d *BeanDefinition) Primary() *BeanDefinition {
 	d.primary = true
 	return d
@@ -213,7 +213,7 @@ func validLifeCycleFunc(fnType reflect.Type, beanValue reflect.Value) bool {
 	return utils.ReturnNothing(fnType) || utils.ReturnOnlyError(fnType)
 }
 
-// Init 设置 bean 的初始化函数。
+// Init Set the initialization function for a bean.
 func (d *BeanDefinition) Init(fn interface{}) *BeanDefinition {
 	if validLifeCycleFunc(reflect.TypeOf(fn), d.Value()) {
 		d.init = fn
@@ -222,7 +222,7 @@ func (d *BeanDefinition) Init(fn interface{}) *BeanDefinition {
 	panic(errors.New("init should be func(bean) or func(bean)error"))
 }
 
-// Destroy 设置 bean 的销毁函数。
+// Destroy Set the destruction function for a bean.
 func (d *BeanDefinition) Destroy(fn interface{}) *BeanDefinition {
 	if validLifeCycleFunc(reflect.TypeOf(fn), d.Value()) {
 		d.destroy = fn
@@ -292,7 +292,8 @@ func (d *BeanDefinition) destructor() {
 	}
 }
 
-// NewBean 普通函数注册时需要使用 reflect.ValueOf(fn) 形式以避免和构造函数发生冲突。
+// NewBean create bean from object or function.
+// When registering a regular function, use the form reflect.ValueOf(fn) to avoid conflicts with constructor functions.
 func NewBean(objOrCtor interface{}, ctorArgs ...arg.Arg) *BeanDefinition {
 
 	var v reflect.Value

@@ -46,8 +46,8 @@ func (c *container) Bind(i interface{}, args ...conf.BindArg) error {
 	return c.p.Bind(i, args...)
 }
 
-// Find 查找符合条件的 bean 对象，注意该函数只能保证返回的 bean 是有效的，即未被
-// 标记为删除的，而不能保证已经完成属性绑定和依赖注入。
+// Find the bean objects that meet the specified conditions. Note that this function can only guarantee that the returned beans are valid, i.e.,
+// not marked for deletion, but it cannot guarantee that property binding and dependency injection have been completed.
 func (c *container) Find(selector utils.BeanSelector) ([]utils.BeanDefinition, error) {
 	beans, err := c.findBean(selector)
 	if err != nil {
@@ -60,15 +60,13 @@ func (c *container) Find(selector utils.BeanSelector) ([]utils.BeanDefinition, e
 	return ret, nil
 }
 
-// Get 根据类型和选择器获取符合条件的 bean 对象。当 i 是一个基础类型的 bean 接收
-// 者时，表示符合条件的 bean 对象只能有一个，没有找到或者多于一个时会返回 error。
-// 当 i 是一个 map 类型的 bean 接收者时，表示获取任意数量的 bean 对象，map 的
-// key 是 bean 的名称，map 的 value 是 bean 的地址。当 i 是一个 array 或者
-// slice 时，也表示获取任意数量的 bean 对象，但是它会对获取到的 bean 对象进行排序，
-// 如果没有传入选择器或者传入的选择器是 * ，则根据 bean 的 order 值进行排序，这种
-// 工作模式称为自动模式，否则根据传入的选择器列表进行排序，这种工作模式成为指派模式。
-// 该方法和 Find 方法的区别是该方法保证返回的所有 bean 对象都已经完成属性绑定和依
-// 赖注入，而 Find 方法只能保证返回的 bean 对象是有效的，即未被标记为删除的。
+// Get retrieves the bean objects that meet the specified conditions based on the type and selector.
+//
+// When i is a receiver of a basic type, it represents that there can only be one bean object that meets the conditions. If none or more than one is found, an error will be returned.
+// When i is a receiver of a map type, it represents retrieving any number of bean objects. The keys in the map are the names of the beans, and the values are the addresses of the beans.
+// When i is an array or slice, it also represents retrieving any number of bean objects. However, it sorts the retrieved bean objects. If no selector is provided or the selector is "*",
+// it sorts the bean objects based on the order value of the beans. This mode is called automatic mode. Otherwise, it sorts the bean objects based on the provided selector list. This mode is called assigned mode.
+// The difference between this method and the Find method is that Get guarantees that all returned bean objects have completed property binding and dependency injection, while Find only guarantees that the returned bean objects are valid, i.e., not marked for deletion.
 func (c *container) Get(i interface{}, selectors ...utils.BeanSelector) error {
 
 	if i == nil {
@@ -97,9 +95,9 @@ func (c *container) Get(i interface{}, selectors ...utils.BeanSelector) error {
 	return nil
 }
 
-// Wire 如果传入的是 bean 对象，则对 bean 对象进行属性绑定和依赖注入，如果传入的
-// 是构造函数，则立即执行该构造函数，然后对返回的结果进行属性绑定和依赖注入。无论哪
-// 种方式，该函数执行完后都会返回 bean 对象的真实值。
+// Wire If the input to Wire is a bean object, it performs property binding and dependency injection on that bean object.
+// If the input is a constructor, it immediately executes that constructor and then performs property binding and dependency injection on the returned result.
+// In both cases, the function returns the actual value of the bean object after its execution is complete.
 func (c *container) Wire(objOrCtor interface{}, ctorArgs ...arg.Arg) (interface{}, error) {
 	b := NewBean(objOrCtor, ctorArgs...)
 	stack := newWiringStack(c.logger)

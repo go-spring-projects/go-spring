@@ -25,6 +25,12 @@ const Website = "https://github.com/limpo1989/go-spring"
 
 var Version = "go-spring"
 
+var Banner = `
+  ______  _____      _______  _____   ______ _____ __   _  ______
+ |  ____ |     | ___ |______ |_____] |_____/   |   | \  | |  ____
+ |_____| |_____|     ______| |       |    \_ __|__ |  \_| |_____|
+`
+
 func init() {
 	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		for _, pkg := range buildInfo.Deps {

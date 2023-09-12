@@ -22,18 +22,16 @@ import (
 	"path/filepath"
 )
 
-// Resource 具有名字的 io.Reader 接口称为资源。
 type Resource interface {
 	io.ReadCloser
 	Name() string
 }
 
-// ResourceLocator 查找名字为 filename 的资源。
 type ResourceLocator interface {
 	Locate(filename string) ([]Resource, error)
 }
 
-// FileResourceLocator 从本地文件系统中查找资源。
+// FileResourceLocator locate Resource from file system.
 type FileResourceLocator struct {
 	ConfigLocations []string `value:"${spring.config.locations:=config/}"`
 }

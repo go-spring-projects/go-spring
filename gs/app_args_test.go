@@ -40,3 +40,25 @@ func TestLoadCmdArgs(t *testing.T) {
 		assert.Equal(t, p.Get("server"), "true")
 	})
 }
+
+func TestConvertEnv(t *testing.T) {
+
+	var cases = []struct {
+		key    string
+		expect string
+	}{
+		{"a.b.c", EnvPrefix + "A_B_C"},
+		{"a", EnvPrefix + "A"},
+		{"a.b.c.d", EnvPrefix + "A_B_C_D"},
+		{"http.port", EnvPrefix + "HTTP_PORT"},
+		{"web-server.listen", EnvPrefix + "WEB-SERVER_LISTEN"},
+		{"_a_b_c", EnvPrefix + "_A_B_C"},
+		{"go-spring.name", EnvPrefix + "GO-SPRING_NAME"},
+		{"gs_spring.level", EnvPrefix + "SPRING_LEVEL"},
+		{"GS_PROJECT_NAME", EnvPrefix + "PROJECT_NAME"},
+	}
+
+	for _, c := range cases {
+		assert.Equal(t, convertToEnv(c.key), c.expect)
+	}
+}

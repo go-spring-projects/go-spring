@@ -1,15 +1,27 @@
 # Go-Spring
-Go-Spring 的愿景是让 Go 程序员也能用上如 Java Spring 那般威力强大的编程框架，立志为用户提供简单、安全、可信赖的编程体验。
 
-本项目修改自： [go-spring/go-spring](https://github.com/go-spring/go-spring)
-* 采用主库发布模式
-* 精简第三方模块，仅保留核心依赖注入
+[![GoDoc][1]][2] [![license-Apache 2][3]][4]
 
-### IoC 容器
+<!--[![Downloads][7]][8]-->
 
-Go-Spring 不仅实现了如 Java Spring 那般功能强大的 IoC 容器，还扩充了 Bean 的概念。在 Go 中，对象(即指针)、数组、Map、函数指针，这些都是 Bean，都可以放到 IoC 容器里。
+[1]: https://godoc.org/github.com/limpo1989/go-spring?status.svg
+[2]: https://godoc.org/github.com/limpo1989/go-spring
+[3]: https://img.shields.io/badge/license-Apache%202-blue.svg
+[4]: LICENSE
 
-| 常用的 Java Spring 注解				                | 对应的 Go-Spring 实现			            |
+Go-Spring's vision is to empower Go programmers with a powerful programming framework similar to Java Spring. It is dedicated to providing users with a simple, secure, and reliable programming experience.
+
+This project based from [go-spring/go-spring](https://github.com/go-spring/go-spring) created by [lvan100](https://github.com/lvan100)
+* Switch to monolithic repository.
+* Simplify third-party modules and retain only the core dependency injection functionality.
+* Invoke AppRunner and AppEvent in the order of their dependencies.
+* Expand the dynamic property types like Array/Map/Value
+
+### IoC container
+
+In addition to implementing a powerful IoC container similar to Java Spring, Go-Spring also extends the concept of beans. In Go, objects (pointers), arrays, maps, and function pointers can all be considered beans and can be placed in the IoC container.
+
+| Java Spring 				                      | Go-Spring			                   |
 |:--------------------------------------|:-------------------------------|
 | `@Value` 								                     | `value:"${}"` 				             |
 | `@Autowired` `@Qualifier` `@Required` | `autowire:"?"` 				            |
@@ -28,9 +40,9 @@ Go-Spring 不仅实现了如 Java Spring 那般功能强大的 IoC 容器，还�
 | `@ConditionalOnMissingClass` 			      | Don't Need 					               |
 | `@Lookup` 							                     | —— 							                     |
 
-### 属性绑定
+### Property binding
 
-Go-Spring 不仅支持对普通数据类型进行属性绑定，也支持对自定义值类型进行属性绑定，而且还支持对结构体属性的嵌套绑定。
+Go-Spring not only supports property binding for primitive data types but also supports property binding for custom value types. It also provides support for nested binding of struct properties.
 
 ```
 type DB struct {
@@ -46,7 +58,7 @@ type DbConfig struct {
 }
 ```
 
-上面这段代码可以通过下面的配置进行绑定：
+The above code can be bound using the following configuration：
 
 ```
 db:
@@ -63,10 +75,6 @@ db:
     port: 3306
     db: db2
 ```
-
-#### 发起者
-
-[@lvan100 (LiangHuan)](https://github.com/lvan100)
 
 ### License
 

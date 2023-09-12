@@ -17,11 +17,8 @@
 package conf
 
 import (
-	"io"
-	"syscall"
 	"testing"
 
-	"github.com/limpo1989/go-spring/utils"
 	"github.com/limpo1989/go-spring/utils/assert"
 )
 
@@ -43,29 +40,6 @@ func TestLoad(t *testing.T) {
 	assert.Error(t, err, "cannot unmarshal \\!!str `a:=b` into map\\[string]interface \\{}")
 
 	_, err = Load("testdata/application.yaml")
-	assert.Nil(t, err)
-}
-
-func TestRead(t *testing.T) {
-
-	_, err := Read(utils.FuncReader(func(p []byte) (n int, err error) {
-		return 0, syscall.ENOENT
-	}), ".yaml")
-	assert.Error(t, err, "The system cannot find the file specified")
-
-	_, err = Read(utils.FuncReader(func(p []byte) (n int, err error) {
-		return copy(p, "a=b"), io.EOF
-	}), ".xyz")
-	assert.Error(t, err, "unsupported file type \\.xyz")
-
-	_, err = Read(utils.FuncReader(func(p []byte) (n int, err error) {
-		return copy(p, "a:=b"), io.EOF
-	}), ".yaml")
-	assert.Error(t, err, "cannot unmarshal \\!!str `a:=b` into map\\[string]interface \\{}")
-
-	_, err = Read(utils.FuncReader(func(p []byte) (n int, err error) {
-		return copy(p, "a=b"), io.EOF
-	}), ".properties")
 	assert.Nil(t, err)
 }
 

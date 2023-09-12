@@ -34,25 +34,25 @@ import (
 	"github.com/limpo1989/go-spring/utils"
 )
 
-// AppRunner 命令行启动器接口
+// AppRunner .
 type AppRunner interface {
 	Run(ctx Context)
 }
 
-// AppEvent 应用运行过程中的事件
+// AppEvent start and stop events
 type AppEvent interface {
-	OnAppStart(ctx Context)        // 应用启动的事件
-	OnAppStop(ctx context.Context) // 应用停止的事件
+	OnAppStart(ctx Context)
+	OnAppStop(ctx context.Context)
 }
 
-// App 应用
+// App Ioc App
 type App struct {
 	logger    *log.Logger
 	container *container
 	exitChan  chan struct{}
 }
 
-// NewApp application 的构造函数
+// NewApp make a new App
 func NewApp() *App {
 	return &App{
 		container: New().(*container),
@@ -60,10 +60,11 @@ func NewApp() *App {
 	}
 }
 
+// Run start app.
 func (app *App) Run(resourceLocator ...ResourceLocator) error {
 	app.logger = log.GetLogger(utils.TypeName(app))
 
-	// 响应控制台的 Ctrl+C 及 kill 命令。
+	// Responding to the Ctrl+C and kill commands in the console.
 	go func() {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
@@ -91,23 +92,13 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 		app.printBanner(app.getBanner(app.container.props))
 	}
 
-	// 初始化属性
 	if err := app.container.p.Refresh(app.container.props); nil != err {
 		return err
 	}
 
-	// 执行依赖注入
 	if err := app.container.refresh(false); err != nil {
 		return err
 	}
-
-	//  OnInit
-	//  Run
-	//  OnAppStart
-	//  ---wait-signal---
-	//  Stop GoRoutine
-	//  OnAppStop
-	//  OnDestroy
 
 	app.onAppRun(app.container)
 
@@ -116,16 +107,10 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 	app.container.clear()
 	app.logger.Info("application started successfully")
 
-	// 等待应用停止信号
 	<-app.exitChan
 
-	// 停止所有受GS管理的协程
-	app.container.Cancel()
-
-	// 结束应用
 	app.onAppStop(context.Background())
 
-	// 执行析构函数
 	app.container.Close()
 
 	app.logger.Info("application exited")
@@ -163,15 +148,9 @@ func (app *App) onAppStop(ctx context.Context) {
 	}
 }
 
-const DefaultBanner = `
-  ______  _____      _______  _____   ______ _____ __   _  ______
- |  ____ |     | ___ |______ |_____] |_____/   |   | \  | |  ____
- |_____| |_____|     ______| |       |    \_ __|__ |  \_| |_____|
-`
-
 func (app *App) getBanner(p *conf.Properties) string {
 	var maxPadding = 0
-	if lines := strings.Split(DefaultBanner, "\n"); len(lines) > 0 {
+	if lines := strings.Split(Banner, "\n"); len(lines) > 0 {
 		for _, line := range lines {
 			if lineChars := utf8.RuneCountInString(line); lineChars > maxPadding {
 				maxPadding = lineChars
@@ -183,7 +162,7 @@ func (app *App) getBanner(p *conf.Properties) string {
 	var appRuntime = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 
 	var sb strings.Builder
-	sb.WriteString(DefaultBanner)
+	sb.WriteString(Banner)
 
 	for _, info := range []string{Website, Version, appRuntime} {
 		if len(info) > 0 {
@@ -199,7 +178,7 @@ func (app *App) getBanner(p *conf.Properties) string {
 	return sb.String()
 }
 
-// printBanner 打印 banner 到控制台
+// printBanner print banner to console.
 func (app *App) printBanner(banner string) {
 	if banner[0] != '\n' {
 		fmt.Println()
@@ -208,43 +187,43 @@ func (app *App) printBanner(banner string) {
 	fmt.Println()
 }
 
-// Shutdown 关闭执行器
+// Shutdown close application.
 func (app *App) Shutdown(msg ...string) {
 	app.logger.Sugar().Infof("program will exit %s", strings.Join(msg, " "))
 	select {
 	case <-app.exitChan:
-		// chan 已关闭，无需再次关闭。
+		// app already closed
 	default:
 		close(app.exitChan)
 	}
 }
 
-// OnProperty 当 key 对应的属性值准备好后发送一个通知。
+// OnProperty binding a callback when the property key loaded.
 func (app *App) OnProperty(key string, fn interface{}) {
 	app.container.OnProperty(key, fn)
 }
 
-// Property 参考 Container.Property 的解释。
+// Property set property key/value
 func (app *App) Property(key string, value interface{}) {
 	app.container.Property(key, value)
 }
 
-// Accept 参考 Container.Accept 的解释。
+// Accept register bean to Ioc container.
 func (app *App) Accept(b *BeanDefinition) *BeanDefinition {
 	return app.container.Accept(b)
 }
 
-// Object 参考 Container.Object 的解释。
+// Object register object bean to Ioc container.
 func (app *App) Object(i interface{}) *BeanDefinition {
 	return app.container.Accept(NewBean(reflect.ValueOf(i)))
 }
 
-// Provide 参考 Container.Provide 的解释。
+// Provide register method bean to Ioc container.
 func (app *App) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 	return app.container.Accept(NewBean(ctor, args...))
 }
 
-// AllowCircularReferences 参考 Container.AllowCircularReferences 的解释。
+// AllowCircularReferences enable circular-references.
 func (app *App) AllowCircularReferences() {
 	app.container.AllowCircularReferences()
 }

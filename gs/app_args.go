@@ -64,3 +64,19 @@ func loadSystemEnv(p *conf.Properties) error {
 	}
 	return nil
 }
+
+func convertToEnv(key string) string {
+	if strings.Contains(key, ".") {
+		// replace '.' to '_'
+		key = strings.ReplaceAll(key, ".", "_")
+	}
+
+	// upper case
+	key = strings.ToUpper(key)
+
+	if !strings.HasPrefix(key, EnvPrefix) {
+		// append prefix
+		key = EnvPrefix + key
+	}
+	return key
+}

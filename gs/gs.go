@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-// Package gs 实现了 go-spring 的核心骨架，包含 IoC 容器、基于 IoC 容器的 App
-// 以及全局 App 对象封装三个部分，可以应用于多种使用场景。
+// Package gs is a core of Go-Spring, including IOC container, IOC container-based APP.
 package gs
 
 import (
@@ -40,10 +39,10 @@ import (
 type refreshState int
 
 const (
-	Unrefreshed = refreshState(iota) // 未刷新
-	RefreshInit                      // 准备刷新
-	Refreshing                       // 正在刷新
-	Refreshed                        // 已刷新
+	Unrefreshed = refreshState(iota)
+	RefreshInit
+	Refreshing
+	Refreshed
 )
 
 var (
@@ -61,7 +60,7 @@ type Container interface {
 	Close()
 }
 
-// Context 提供了一些在 IoC 容器启动后基于反射获取和使用 property 与 bean 的接口。
+// Context provides interfaces for using properties and beans based on reflection after the IoC container is started.
 type Context interface {
 	Context() context.Context
 	Keys() []string
@@ -88,13 +87,16 @@ type tempContainer struct {
 	mapOfOnProperty map[string]interface{}
 }
 
-// container 是 go-spring 框架的基石，实现了 Martin Fowler 在 << Inversion
-// of Control Containers and the Dependency Injection pattern >> 一文中
-// 提及的依赖注入的概念。但原文的依赖注入仅仅是指对象之间的依赖关系处理，而有些 IoC
-// 容器在实现时比如 Spring 还引入了对属性 property 的处理。通常大家会用依赖注入统
-// 述上面两种概念，但实际上使用属性绑定来描述对 property 的处理会更加合适，因此
-// go-spring 严格区分了这两种概念，在描述对 bean 的处理时要么单独使用依赖注入或属
-// 性绑定，要么同时使用依赖注入和属性绑定。
+// The container is the cornerstone of the go-spring framework, implementing the concept of dependency injection mentioned in
+// Martin Fowler's article "Inversion of Control Containers and the Dependency Injection pattern."
+// However, the original article only refers to dependency injection as the handling of dependencies between objects,
+// while some IoC containers, such as Spring, also introduce the handling of properties.
+//
+// Usually, people use the term "dependency injection" to describe both concepts mentioned above. However,
+// it is more appropriate to use the term "property binding" to describe the handling of properties.
+// Therefore, go-spring strictly differentiates between these two concepts.
+// When describing the handling of beans, either dependency injection or property binding can be used separately,
+// or both dependency injection and property binding can be used together.
 type container struct {
 	*tempContainer
 	logger                  *log.Logger
@@ -108,7 +110,7 @@ type container struct {
 	allowCircularReferences bool
 }
 
-// New 创建 IoC 容器。
+// New make a IoC container.
 func New() Container {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &container{
@@ -124,11 +126,12 @@ func New() Container {
 	}
 }
 
-// Context 返回 IoC 容器的 ctx 对象。
+// Context return context of IoC container.
 func (c *container) Context() context.Context {
 	return c.ctx
 }
 
+// Properties return properties of IoC container.
 func (c *container) Properties() *dync.Properties {
 	return c.p
 }
@@ -144,22 +147,20 @@ func validOnProperty(fn interface{}) error {
 	return nil
 }
 
-// OnProperty 当 key 对应的属性值准备好后发送一个通知。
+// OnProperty binding a callback when the property key loaded.
 func (c *container) OnProperty(key string, fn interface{}) {
 	err := validOnProperty(fn)
 	utils.Panic(err).When(err != nil)
 	c.mapOfOnProperty[key] = fn
 }
 
-// Property 设置 key 对应的属性值，如果 key 对应的属性值已经存在则 Set 方法会
-// 覆盖旧值。Set 方法除了支持 string 类型的属性值，还支持 int、uint、bool 等
-// 其他基础数据类型的属性值。特殊情况下，Set 方法也支持 slice 、map 与基础数据
-// 类型组合构成的属性值，其处理方式是将组合结构层层展开，可以将组合结构看成一棵树，
-// 那么叶子结点的路径就是属性的 key，叶子结点的值就是属性的值。
+// Property sets the value of the property corresponding to the key. If the property value for the key already exists, the Set method will overwrite the old value.
+// In addition to supporting string type property values, the Set method also supports other primitive data types such as int, uint, bool, and so on for property values.
 func (c *container) Property(key string, value interface{}) {
 	c.props.Set(key, value)
 }
 
+// Accept register bean to Ioc container.
 func (c *container) Accept(b *BeanDefinition) *BeanDefinition {
 	if c.state >= Refreshing {
 		panic(errors.New("should call before Refresh"))
@@ -168,22 +169,22 @@ func (c *container) Accept(b *BeanDefinition) *BeanDefinition {
 	return b
 }
 
-// Object 注册对象形式的 bean ，需要注意的是该方法在注入开始后就不能再调用了。
+// Object register object bean to Ioc container.
 func (c *container) Object(i interface{}) *BeanDefinition {
 	return c.Accept(NewBean(reflect.ValueOf(i)))
 }
 
-// Provide 注册构造函数形式的 bean ，需要注意的是该方法在注入开始后就不能再调用了。
+// Provide register method bean to Ioc container.
 func (c *container) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 	return c.Accept(NewBean(ctor, args...))
 }
 
-// AllowCircularReferences 启用循环依赖
+// AllowCircularReferences enable circular-references.
 func (c *container) AllowCircularReferences() {
 	c.allowCircularReferences = true
 }
 
-// Dependencies 按照正序或者反序返回依赖
+// Dependencies return the dependency order list in either ascending or descending order.
 func (c *container) Dependencies(asc bool) (deps []*BeanDefinition) {
 	if !asc {
 		deps = make([]*BeanDefinition, 0, len(c.dependencies))
@@ -219,7 +220,7 @@ func newWiringStack(logger *log.Logger) *wiringStack {
 
 // pushBack 添加一个即将注入的 bean 。
 func (s *wiringStack) pushBack(b *BeanDefinition) {
-	s.logger.Sugar().Debugf("push %s %s", b, getStatusString(b.status))
+	s.logger.Sugar().Debugf("push %s %s", b, b.status)
 	s.beans = append(s.beans, b)
 }
 
@@ -228,7 +229,7 @@ func (s *wiringStack) popBack() {
 	n := len(s.beans)
 	b := s.beans[n-1]
 	s.beans = s.beans[:n-1]
-	s.logger.Sugar().Debugf("pop %s %s", b, getStatusString(b.status))
+	s.logger.Sugar().Debugf("pop %s %s", b, b.status)
 }
 
 // pushDependency 记录依赖顺序
@@ -258,7 +259,7 @@ func (c *container) clear() {
 	c.tempContainer = nil
 }
 
-// Refresh 刷新容器的内容，对 bean 进行有效性判断以及完成属性绑定和依赖注入。
+// Refresh the container's beans, perform validity checks on beans, and complete property binding and dependency injection.
 func (c *container) Refresh() error {
 	return c.refresh(true)
 }
@@ -1062,8 +1063,13 @@ func (c *container) collectBeans(v reflect.Value, tags []wireTag, nullable bool,
 	return nil
 }
 
-// Close 关闭容器，此方法必须在 Refresh 之后调用。按照被依赖先销毁的原则执行所有的销毁函数。
+// Close clos Ioc container.
 func (c *container) Close() {
+	// send a cancel signal to all coroutines managed by the IoC container and wait for them to complete their exit.
+	c.cancel()
+	c.wg.Wait()
+
+	c.logger.Info("goroutines exited")
 
 	for _, bean := range c.Dependencies(false) {
 		bean.destructor()
@@ -1072,16 +1078,7 @@ func (c *container) Close() {
 	c.logger.Info("container closed")
 }
 
-// Cancel 停止当前所有携程的运行，该方法会触发 ctx 的 Done 信号，然后等待所有 goroutine 结束
-func (c *container) Cancel() {
-	c.cancel()
-	c.wg.Wait()
-
-	c.logger.Info("goroutines exited")
-}
-
-// Go 创建安全可等待的 goroutine，fn 要求的 ctx 对象由 IoC 容器提供，当 IoC 容
-// 器关闭时 ctx会 发出 Done 信号， fn 在接收到此信号后应当立即退出。
+// Go start a goroutine managed by the IoC container.
 func (c *container) Go(fn func(ctx context.Context)) {
 	c.wg.Add(1)
 	go func() {

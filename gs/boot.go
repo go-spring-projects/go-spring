@@ -27,53 +27,54 @@ import (
 
 var bootApp = NewApp()
 
-// Setenv 封装 os.Setenv 函数，如果发生 error 会 panic 。
+// Setenv convert property syntax to env.
 func Setenv(key string, value string) {
+	key = convertToEnv(key)
 	err := os.Setenv(key, value)
 	utils.Panic(err).When(err != nil)
 }
 
-// Run 启动程序。
+// Run start boot app.
 func Run(resourceLocator ...ResourceLocator) error {
 	return bootApp.Run(resourceLocator...)
 }
 
-// Shutdown 停止程序。
+// Shutdown close boot app.
 func Shutdown(msg ...string) {
 	bootApp.Shutdown(msg...)
 }
 
-// OnProperty 注册属性监听
+// OnProperty binding a callback when the property key loaded.
 func OnProperty(key string, fn interface{}) {
 	bootApp.OnProperty(key, fn)
 }
 
-// Property 设置属性键值对
+// Property set property key/value.
 func Property(key string, fn interface{}) {
 	bootApp.Property(key, fn)
 }
 
-// Accept 注册自定义bean
+// Accept register bean to Ioc container.
 func Accept(b *BeanDefinition) *BeanDefinition {
 	return bootApp.container.Accept(b)
 }
 
-// Object 注册一个对象bean
+// Object register bean to Ioc container.
 func Object(i interface{}) *BeanDefinition {
 	return bootApp.container.Accept(NewBean(reflect.ValueOf(i)))
 }
 
-// Provide 注册一个方法bean
+// Provide register bean to Ioc container.
 func Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 	return bootApp.container.Accept(NewBean(ctor, args...))
 }
 
-// Go 启动一个受gs管理的协程
+// Go start a goroutine managed by the IoC container.
 func Go(fn func(ctx context.Context)) {
 	bootApp.container.Go(fn)
 }
 
-// AllowCircularReferences 启用循环依赖（注意构造函数bean循环依赖无解）
+// AllowCircularReferences enable circular-references.
 func AllowCircularReferences() {
 	bootApp.container.AllowCircularReferences()
 }

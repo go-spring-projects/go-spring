@@ -16,7 +16,7 @@
 
 //go:generate mockgen -build_flags="-mod=mod" -package=arg -source=arg.go -destination=arg_mock.go
 
-// Package arg 用于实现函数参数绑定。
+// Package arg provide a method arguments binding。
 package arg
 
 import (
@@ -41,10 +41,12 @@ type Context interface {
 	Wire(v reflect.Value, tag string) error
 }
 
-// Arg 用于为函数参数提供绑定值。可以是 bean.Selector 类型，表示注入 bean ；
-// 可以是 ${X:=Y} 形式的字符串，表示属性绑定或者注入 bean ；可以是 ValueArg
-// 类型，表示不从 IoC 容器获取而是用户传入的普通值；可以是 IndexArg 类型，表示
-// 带有下标的参数绑定；可以是 *optionArg 类型，用于为 Option 方法提供参数绑定。
+// Arg is used to provide binding values for function parameters.
+// It can be of type bean.Selector, indicating injection of a bean.
+// It can be a string in the form of ${X:=Y}, representing property binding or injection of a bean.
+// It can be of type ValueArg, representing a regular value passed by the user instead of being retrieved from the IoC container.
+// It can be of type IndexArg, representing parameter binding with an index.
+// It can be of type *optionArg, used to provide parameter binding for the Option method.
 type Arg interface{}
 
 // IndexArg is an Arg that has an index.
@@ -278,21 +280,21 @@ func (r *argList) getArg(ctx Context, arg Arg, t reflect.Type, fileLine string) 
 	return reflect.Value{}, fmt.Errorf("error type %s", t.String())
 }
 
-// optionArg Option 函数的参数绑定。
+// optionArg Parameter binding in functions.
 type optionArg struct {
 	logger *log.Logger
 	r      *Callable
 	c      cond.Condition
 }
 
-// Provide 为 Option 方法绑定运行时参数。
+// Provide binding runtime parameters for the Option method.
 func Provide(fn interface{}, args ...Arg) *Callable {
 	r, err := Bind(fn, args, 1)
 	utils.Panic(err).When(err != nil)
 	return r
 }
 
-// Option 返回 Option 函数的参数绑定。
+// Option returning parameter binding for the Option function.
 func Option(fn interface{}, args ...Arg) *optionArg {
 
 	t := reflect.TypeOf(fn)
@@ -305,7 +307,7 @@ func Option(fn interface{}, args ...Arg) *optionArg {
 	return &optionArg{r: r}
 }
 
-// On 设置一个 cond.Condition 对象。
+// On set Condition on this option
 func (arg *optionArg) On(c cond.Condition) *optionArg {
 	arg.c = c
 	return arg
