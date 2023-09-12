@@ -9,13 +9,13 @@
 [3]: https://img.shields.io/badge/license-Apache%202-blue.svg
 [4]: LICENSE
 
-Go-Spring's vision is to empower Go programmers with a powerful programming framework similar to Java Spring. It is dedicated to providing users with a simple, secure, and reliable programming experience.
+`Go-Spring` vision is to empower Go programmers with a powerful programming framework similar to Java `Spring`. It is dedicated to providing users with a simple, secure, and reliable programming experience.
 
 This project based from [go-spring/go-spring](https://github.com/go-spring/go-spring) created by [lvan100](https://github.com/lvan100)
 * Switch to monolithic repository.
-* Simplify third-party modules and retain only the core dependency injection functionality.
-* Invoke AppRunner and AppEvent in the order of their dependencies.
-* Expand the dynamic property types like Array/Map/Value
+* Remove third-party modules and retain only the core dependency injection functionality.
+* Invoke `AppRunner` and `AppEvent` in the order of their dependencies.
+* Expand the dynamic property types like `Array`/`Map`/`Value`.
 
 ### IoC container
 
@@ -42,9 +42,9 @@ In addition to implementing a powerful IoC container similar to Java Spring, Go-
 
 ### Property binding
 
-Go-Spring not only supports property binding for primitive data types but also supports property binding for custom value types. It also provides support for nested binding of struct properties.
+`Go-Spring` not only supports property binding for primitive data types but also supports property binding for custom value types. It also provides support for nested binding of struct properties.
 
-```
+```go
 type DB struct {
 	UserName string `value:"${username}"`
 	Password string `value:"${password}"`
@@ -60,7 +60,7 @@ type DbConfig struct {
 
 The above code can be bound using the following configuration：
 
-```
+```yaml
 db:
   -
     username: root
@@ -78,4 +78,4 @@ db:
 
 ### License
 
-The Go-Spring is released under version 2.0 of the Apache License.
+The `Go-Spring` is released under version 2.0 of the Apache License.
