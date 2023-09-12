@@ -9,7 +9,7 @@ import (
 
 	conf "github.com/limpo1989/go-spring/conf"
 	gomock "github.com/golang/mock/gomock"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 // MockContext is a mock of Context interface.

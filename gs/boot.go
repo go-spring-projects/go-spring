@@ -22,7 +22,7 @@ import (
 	"reflect"
 
 	"github.com/limpo1989/go-spring/gs/arg"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 var bootApp = NewApp()

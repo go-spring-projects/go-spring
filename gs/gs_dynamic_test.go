@@ -22,7 +22,7 @@ import (
 
 	"github.com/limpo1989/go-spring/conf"
 	"github.com/limpo1989/go-spring/dync"
-	"github.com/limpo1989/go-spring/utils/assert"
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
 type DynamicConfig struct {

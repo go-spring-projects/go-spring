@@ -32,8 +32,8 @@ import (
 	"github.com/limpo1989/go-spring/gs/cond"
 	pkg1 "github.com/limpo1989/go-spring/gs/testdata/pkg/bar"
 	pkg2 "github.com/limpo1989/go-spring/gs/testdata/pkg/foo"
-	"github.com/limpo1989/go-spring/utils"
-	"github.com/limpo1989/go-spring/utils/assert"
+	"github.com/limpo1989/go-spring/internal/utils"
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 	"github.com/spf13/cast"
 )
 

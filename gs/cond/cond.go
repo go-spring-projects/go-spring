@@ -27,7 +27,7 @@ import (
 
 	"github.com/antonmedv/expr"
 	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 // UnimplementedMethod throws this error when calling an unimplemented method.

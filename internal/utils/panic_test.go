@@ -14,15 +14,29 @@
  * limitations under the License.
  */
 
-package pkg
+package utils
 
 import (
-	"fmt"
+	"errors"
+	"testing"
+
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
-// SamePkg golang allows packages with the same name under different paths.
-type SamePkg struct{}
+func TestPanicCond(t *testing.T) {
 
-func (p *SamePkg) Package() {
-	fmt.Println("github.com/limpo1989/go-spring/utils/testdata/pkg/bar/pkg.SamePkg")
+	Panic("this is an error").When(false)
+	assert.Panic(t, func() {
+		Panic("this is an error").When(true)
+	}, "this is an error")
+
+	Panic(errors.New("this is an error")).When(false)
+	assert.Panic(t, func() {
+		Panic(errors.New("this is an error")).When(true)
+	}, "this is an error")
+
+	Panicf("this is an %s", "error").When(false)
+	assert.Panic(t, func() {
+		Panicf("this is an %s", "error").When(true)
+	}, "this is an error")
 }

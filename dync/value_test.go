@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/utils/assert"
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
 func TestValue_Uint32(t *testing.T) {

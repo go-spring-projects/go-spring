@@ -32,7 +32,7 @@ import (
 	"github.com/limpo1989/go-spring/conf/prop"
 	"github.com/limpo1989/go-spring/conf/toml"
 	"github.com/limpo1989/go-spring/conf/yaml"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 	"github.com/spf13/cast"
 )
 

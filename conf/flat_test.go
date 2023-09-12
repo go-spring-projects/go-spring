@@ -19,7 +19,7 @@ package conf
 import (
 	"testing"
 
-	"github.com/limpo1989/go-spring/utils/assert"
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
 func TestFlatten(t *testing.T) {

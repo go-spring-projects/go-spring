@@ -23,7 +23,7 @@ import (
 
 	"github.com/limpo1989/go-spring/conf"
 	"github.com/limpo1989/go-spring/gs/arg"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 func (c *container) Keys() []string {

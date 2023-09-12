@@ -34,8 +34,7 @@ import (
 	"github.com/limpo1989/go-spring/dync"
 	"github.com/limpo1989/go-spring/gs/arg"
 	"github.com/limpo1989/go-spring/gs/cond"
-	"github.com/limpo1989/go-spring/log"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 type refreshState int
@@ -48,7 +47,7 @@ const (
 )
 
 var (
-	loggerType  = reflect.TypeOf((*log.Logger)(nil))
+	loggerType  = reflect.TypeOf((*Logger)(nil))
 	contextType = reflect.TypeOf((*Context)(nil)).Elem()
 )
 
@@ -101,7 +100,7 @@ type tempContainer struct {
 // or both dependency injection and property binding can be used together.
 type container struct {
 	*tempContainer
-	logger                  *log.Logger
+	logger                  *Logger
 	ctx                     context.Context
 	cancel                  context.CancelFunc
 	dependencies            []*BeanDefinition
@@ -208,13 +207,13 @@ type lazyField struct {
 
 // wiringStack 记录 bean 的注入路径。
 type wiringStack struct {
-	logger       *log.Logger
+	logger       *Logger
 	beans        []*BeanDefinition
 	lazyFields   []lazyField
 	dependencies []*BeanDefinition
 }
 
-func newWiringStack(logger *log.Logger) *wiringStack {
+func newWiringStack(logger *Logger) *wiringStack {
 	return &wiringStack{
 		logger: logger,
 	}
@@ -274,7 +273,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 
 	start := time.Now()
 	c.state = RefreshInit
-	c.logger = log.GetLogger(utils.TypeName(c))
+	c.logger = GetLogger(utils.TypeName(c))
 
 	c.Object(c).Export((*Context)(nil))
 
@@ -708,9 +707,9 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 		tag, ok := ft.Tag.Lookup("logger")
 		if ok {
 			if ft.Type != loggerType {
-				return fmt.Errorf("field %s expects type *log.Logger but got %s", fieldPath, ft.Type.String())
+				return fmt.Errorf("field %s expects type *gs.Logger but got %s", fieldPath, ft.Type.String())
 			}
-			l := log.GetLogger(utils.TypeName(v))
+			l := GetLogger(utils.TypeName(v))
 			fv.Set(reflect.ValueOf(l))
 			continue
 		}

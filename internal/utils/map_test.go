@@ -20,7 +20,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/limpo1989/go-spring/utils/assert"
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
 func TestSortedKeys(t *testing.T) {

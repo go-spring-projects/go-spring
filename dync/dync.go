@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+// Package dync provide dynamic property supported.
 package dync
 
 import (
@@ -23,7 +24,7 @@ import (
 	"sync/atomic"
 
 	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 // A Field represents a refreshable struct field.

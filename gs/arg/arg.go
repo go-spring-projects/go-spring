@@ -26,8 +26,8 @@ import (
 	"runtime"
 
 	"github.com/limpo1989/go-spring/gs/cond"
-	"github.com/limpo1989/go-spring/log"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/log"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 // Context defines some methods of IoC container that Callable use.
@@ -183,7 +183,7 @@ func newArgList(fnType reflect.Type, args []Arg) (*argList, error) {
 // get returns all processed Args value. fileLine is the binding position of Callable.
 func (r *argList) get(ctx Context, fileLine string) ([]reflect.Value, error) {
 
-	// TODO 也许可以通过参数传递 *log.Logger 对象
+	// TODO 也许可以通过参数传递 *gs.Logger 对象
 	if r.logger == nil {
 		r.logger = log.GetLogger(utils.TypeName(r))
 	}
@@ -315,7 +315,7 @@ func (arg *optionArg) On(c cond.Condition) *optionArg {
 
 func (arg *optionArg) call(ctx Context) (reflect.Value, error) {
 
-	// TODO 也许可以通过参数传递 *log.Logger 对象
+	// TODO 也许可以通过参数传递 *gs.Logger 对象
 	if arg.logger == nil {
 		arg.logger = log.GetLogger(utils.TypeName(arg))
 	}

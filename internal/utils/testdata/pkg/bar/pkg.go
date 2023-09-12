@@ -14,38 +14,15 @@
  * limitations under the License.
  */
 
-package dync
+package pkg
 
 import (
-	"encoding/json"
-	"testing"
-
-	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/internal/utils/assert"
+	"fmt"
 )
 
-func TestBool(t *testing.T) {
+// SamePkg golang allows packages with the same name under different paths.
+type SamePkg struct{}
 
-	var u Bool
-	assert.Equal(t, u.Value(), false)
-
-	param := conf.BindParam{
-		Key:  "bool",
-		Path: "bool",
-		Tag: conf.ParsedTag{
-			Key: "bool",
-		},
-	}
-
-	p := conf.Map(nil)
-	err := u.OnRefresh(p, param)
-	assert.Error(t, err, "bind bool error: property \"bool\": not exist")
-
-	_ = p.Set("bool", true)
-	err = u.OnRefresh(p, param)
-	assert.Equal(t, u.Value(), true)
-
-	b, err := json.Marshal(&u)
-	assert.Nil(t, err)
-	assert.Equal(t, string(b), "true")
+func (p *SamePkg) Package() {
+	fmt.Println("github.com/limpo1989/go-spring/internal/utils/testdata/pkg/bar/pkg.SamePkg")
 }

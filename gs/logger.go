@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package pkg
+package gs
 
-import (
-	"fmt"
-)
+import "github.com/limpo1989/go-spring/internal/log"
 
-// SamePkg golang allows packages with the same name under different paths.
-type SamePkg struct{}
+type Logger = log.Logger
 
-func (p *SamePkg) Package() {
-	fmt.Println("github.com/limpo1989/go-spring/utils/testdata/pkg/foo/pkg.SamePkg")
+func SetLogger(logger *Logger) {
+	log.SetLogger(logger)
+}
+
+func GetLogger(typeName string) *Logger {
+	return log.GetLogger(typeName)
 }

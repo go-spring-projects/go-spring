@@ -25,7 +25,7 @@ import (
 
 	"github.com/limpo1989/go-spring/gs/arg"
 	"github.com/limpo1989/go-spring/gs/cond"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 type beanStatus int8

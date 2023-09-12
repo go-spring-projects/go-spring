@@ -30,8 +30,7 @@ import (
 
 	"github.com/limpo1989/go-spring/conf"
 	"github.com/limpo1989/go-spring/gs/arg"
-	"github.com/limpo1989/go-spring/log"
-	"github.com/limpo1989/go-spring/utils"
+	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 // AppRunner .
@@ -47,7 +46,7 @@ type AppEvent interface {
 
 // App Ioc App
 type App struct {
-	logger    *log.Logger
+	logger    *Logger
 	container *container
 	exitChan  chan struct{}
 }
@@ -62,7 +61,7 @@ func NewApp() *App {
 
 // Run start app.
 func (app *App) Run(resourceLocator ...ResourceLocator) error {
-	app.logger = log.GetLogger(utils.TypeName(app))
+	app.logger = GetLogger(utils.TypeName(app))
 
 	// Responding to the Ctrl+C and kill commands in the console.
 	go func() {

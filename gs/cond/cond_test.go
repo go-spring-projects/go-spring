@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/limpo1989/go-spring/utils"
-	"github.com/limpo1989/go-spring/utils/assert"
+	"github.com/limpo1989/go-spring/internal/utils"
+	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
 func TestOK(t *testing.T) {
