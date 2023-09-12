@@ -1,26 +1,48 @@
 package log
 
 import (
+	"log/slog"
+	"os"
 	"path/filepath"
-
-	"go.uber.org/zap"
+	"strings"
+	"sync/atomic"
 )
 
-type Logger = zap.Logger
+type Logger = slog.Logger
 
-var defLogger = zap.Must(zap.Config{
-	Level:            zap.NewAtomicLevelAt(zap.InfoLevel),
-	Development:      true,
-	Encoding:         "console",
-	EncoderConfig:    zap.NewDevelopmentEncoderConfig(),
-	OutputPaths:      []string{"stderr"},
-	ErrorOutputPaths: []string{"stderr"},
-}.Build())
+var defaultLogger atomic.Value
 
-func SetLogger(logger *zap.Logger) {
-	defLogger = logger
+func init() {
+	slogOptions := &slog.HandlerOptions{
+		AddSource: true,
+		Level:     slog.LevelInfo,
+		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
+			if slog.SourceKey == attr.Key {
+				source := attr.Value.Any().(*slog.Source)
+				idx := strings.LastIndexByte(source.File, '/')
+				if idx == -1 {
+					return attr
+				}
+				// Find the penultimate separator.
+				idx = strings.LastIndexByte(source.File[:idx], '/')
+				if idx == -1 {
+					return attr
+				}
+
+				source.File = source.File[idx+1:]
+			}
+
+			return attr
+		},
+	}
+	defaultLogger.Store(slog.New(slog.NewTextHandler(os.Stdout, slogOptions)))
+}
+
+func SetLogger(logger *Logger) {
+	defaultLogger.Store(logger)
 }
 
 func GetLogger(typeName string) *Logger {
-	return defLogger.Named(filepath.Base(typeName))
+	logger := defaultLogger.Load().(*Logger)
+	return logger.With("logger", filepath.Base(typeName))
 }

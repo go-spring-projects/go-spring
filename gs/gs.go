@@ -22,7 +22,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"reflect"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -220,7 +222,7 @@ func newWiringStack(logger *log.Logger) *wiringStack {
 
 // pushBack 添加一个即将注入的 bean 。
 func (s *wiringStack) pushBack(b *BeanDefinition) {
-	s.logger.Sugar().Debugf("push %s %s", b, b.status)
+	s.logger.Debug(fmt.Sprintf("push %s %s", b, b.status))
 	s.beans = append(s.beans, b)
 }
 
@@ -229,7 +231,7 @@ func (s *wiringStack) popBack() {
 	n := len(s.beans)
 	b := s.beans[n-1]
 	s.beans = s.beans[:n-1]
-	s.logger.Sugar().Debugf("pop %s %s", b, b.status)
+	s.logger.Debug(fmt.Sprintf("pop %s %s", b, b.status))
 }
 
 // pushDependency 记录依赖顺序
@@ -349,7 +351,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 	c.state = Refreshed
 
 	cost := time.Now().Sub(start)
-	c.logger.Sugar().Infof("refresh %d beans cost %v", len(beansById), cost)
+	c.logger.Info(fmt.Sprintf("refresh %d beans cost %v", len(beansById), cost))
 
 	if autoClear && !c.contextAware {
 		c.clear()
@@ -360,11 +362,11 @@ func (c *container) refresh(autoClear bool) (err error) {
 }
 
 func (c *container) registerBean(b *BeanDefinition) {
-	c.logger.Sugar().Debugf("register %s name:%q type:%q %s", b.getClass(), b.BeanName(), b.Type(), b.FileLine())
+	c.logger.Debug(fmt.Sprintf("register %s name:%q type:%q %s", b.getClass(), b.BeanName(), b.Type(), b.FileLine()))
 	c.beansByName[b.name] = append(c.beansByName[b.name], b)
 	c.beansByType[b.Type()] = append(c.beansByType[b.Type()], b)
 	for _, t := range b.exports {
-		c.logger.Sugar().Debugf("register %s name:%q type:%q %s", b.getClass(), b.BeanName(), t, b.FileLine())
+		c.logger.Debug(fmt.Sprintf("register %s name:%q type:%q %s", b.getClass(), b.BeanName(), t, b.FileLine()))
 		c.beansByType[t] = append(c.beansByType[t], b)
 	}
 }
@@ -706,7 +708,7 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 		tag, ok := ft.Tag.Lookup("logger")
 		if ok {
 			if ft.Type != loggerType {
-				return fmt.Errorf("field expects type *log.Logger")
+				return fmt.Errorf("field %s expects type *log.Logger but got %s", fieldPath, ft.Type.String())
 			}
 			l := log.GetLogger(utils.TypeName(v))
 			fv.Set(reflect.ValueOf(l))
@@ -1085,7 +1087,7 @@ func (c *container) Go(fn func(ctx context.Context)) {
 		defer c.wg.Done()
 		defer func() {
 			if r := recover(); r != nil {
-				c.logger.Sugar().Fatal("%v", r)
+				c.logger.Error(fmt.Sprint(r), slog.String("stack", string(debug.Stack())))
 			}
 		}()
 		fn(c.ctx)

@@ -122,7 +122,7 @@ func (c *container) Invoke(fn interface{}, args ...arg.Arg) ([]interface{}, erro
 
 	defer func() {
 		if len(stack.beans) > 0 {
-			c.logger.Sugar().Debugf("wiring path %s", stack.path())
+			c.logger.Debug(fmt.Sprintf("wiring path %s", stack.path()))
 		}
 	}()
 

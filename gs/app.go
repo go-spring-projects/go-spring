@@ -189,7 +189,7 @@ func (app *App) printBanner(banner string) {
 
 // Shutdown close application.
 func (app *App) Shutdown(msg ...string) {
-	app.logger.Sugar().Infof("program will exit %s", strings.Join(msg, " "))
+	app.logger.Info(fmt.Sprintf("program will exit %s", strings.Join(msg, ", ")))
 	select {
 	case <-app.exitChan:
 		// app already closed
