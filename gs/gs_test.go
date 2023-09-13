@@ -17,9 +17,11 @@
 package gs
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image"
+	"log/slog"
 	"reflect"
 	"sort"
 	"strconv"
@@ -2897,4 +2899,53 @@ func TestContextAware(t *testing.T) {
 	assert.Nil(t, err)
 	a := b.Interface().(*TContextAware)
 	assert.Equal(t, a.Echo("gopher"), "hello gopher!")
+}
+
+type TestLogApp struct {
+	Logger     *Logger `logger:""` // primary logger
+	StdLogger  *Logger `logger:":std"`
+	ErrLogger  *Logger `logger:":err"`
+	JsonLogger *Logger `logger:"${app.logger}"`
+}
+
+func TestLogLogger(t *testing.T) {
+
+	var stdWriter bytes.Buffer
+	var errWriter bytes.Buffer
+	var jsonWriter bytes.Buffer
+
+	var stdLogger = slog.New(slog.NewTextHandler(&stdWriter, nil))
+	var errLogger = slog.New(slog.NewTextHandler(&errWriter, nil))
+	var jsonLogger = slog.New(slog.NewJSONHandler(&jsonWriter, nil))
+
+	// 也可以在OnProperty回调中注册
+	SetLogger("std", stdLogger, true)
+	SetLogger("err", errLogger)
+	SetLogger("json", jsonLogger)
+
+	c := New()
+	p := conf.New()
+	p.Set("app.logger", "json")
+	err := c.Properties().Refresh(p)
+	assert.Nil(t, err)
+
+	b := c.Object(new(TestLogApp))
+	err = c.Refresh()
+	assert.Nil(t, err)
+	logApp := b.Interface().(*TestLogApp)
+
+	logApp.Logger.Info("primary info message")
+	assert.Matches(t, stdWriter.String(), "primary info message")
+
+	stdWriter.Reset()
+
+	logApp.Logger.Info("std info message")
+	assert.Matches(t, stdWriter.String(), "std info message")
+
+	logApp.Logger.Info("err info message")
+	assert.Matches(t, stdWriter.String(), "err info message")
+
+	logApp.Logger.Info("json info message")
+	assert.Matches(t, stdWriter.String(), "json info message")
+
 }

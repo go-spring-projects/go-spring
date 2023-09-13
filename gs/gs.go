@@ -273,7 +273,6 @@ func (c *container) refresh(autoClear bool) (err error) {
 
 	start := time.Now()
 	c.state = RefreshInit
-	c.logger = GetLogger(utils.TypeName(c))
 
 	c.Object(c).Export((*Context)(nil))
 
@@ -287,6 +286,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 	}
 
 	c.state = Refreshing
+	c.logger = GetLogger("", utils.TypeName(c))
 
 	for _, b := range c.beans {
 		c.registerBean(b)
@@ -709,7 +709,23 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 			if ft.Type != loggerType {
 				return fmt.Errorf("field %s expects type *gs.Logger but got %s", fieldPath, ft.Type.String())
 			}
-			l := GetLogger(utils.TypeName(v))
+
+			// tag 预处理，可能通过属性值进行指定。
+			if strings.HasPrefix(tag, "${") {
+				s, err := c.p.Resolve(tag)
+				if nil != err {
+					return fmt.Errorf("field %s failed resolve logger name: %w", fieldPath, err)
+				}
+				tag = s
+			} else if tag != "" {
+				// use bean name
+				tag = parseWireTag(tag).beanName
+			}
+
+			l := GetLogger(tag, utils.TypeName(v))
+			if nil == l {
+				return fmt.Errorf("logger field %s not provide: %s", fieldPath, tag)
+			}
 			fv.Set(reflect.ValueOf(l))
 			continue
 		}

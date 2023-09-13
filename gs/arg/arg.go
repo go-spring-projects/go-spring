@@ -26,7 +26,6 @@ import (
 	"runtime"
 
 	"github.com/limpo1989/go-spring/gs/cond"
-	"github.com/limpo1989/go-spring/internal/log"
 	"github.com/limpo1989/go-spring/internal/utils"
 )
 
@@ -98,7 +97,6 @@ func Value(v interface{}) ValueArg {
 
 // argList stores the arguments of a function.
 type argList struct {
-	logger *log.Logger
 	fnType reflect.Type
 	args   []Arg
 }
@@ -183,11 +181,6 @@ func newArgList(fnType reflect.Type, args []Arg) (*argList, error) {
 // get returns all processed Args value. fileLine is the binding position of Callable.
 func (r *argList) get(ctx Context, fileLine string) ([]reflect.Value, error) {
 
-	// TODO 也许可以通过参数传递 *gs.Logger 对象
-	if r.logger == nil {
-		r.logger = log.GetLogger(utils.TypeName(r))
-	}
-
 	fnType := r.fnType
 	numIn := fnType.NumIn()
 	variadic := fnType.IsVariadic()
@@ -221,16 +214,6 @@ func (r *argList) getArg(ctx Context, arg Arg, t reflect.Type, fileLine string) 
 		err error
 		tag string
 	)
-
-	/*description := fmt.Sprintf("arg:\"%#v\" %s", arg, fileLine)
-	//r.logger.Sugar().Debugf("get value %s", description)
-	defer func() {
-		if err == nil {
-			r.logger.Sugar().Debugf("get value success %s", description)
-		} else {
-			r.logger.Sugar().Errorf("get value error %s for %s", err.Error(), description)
-		}
-	}()*/
 
 	switch g := arg.(type) {
 	case *Callable:
@@ -282,9 +265,8 @@ func (r *argList) getArg(ctx Context, arg Arg, t reflect.Type, fileLine string) 
 
 // optionArg Parameter binding in functions.
 type optionArg struct {
-	logger *log.Logger
-	r      *Callable
-	c      cond.Condition
+	r *Callable
+	c cond.Condition
 }
 
 // Provide binding runtime parameters for the Option method.
@@ -315,24 +297,10 @@ func (arg *optionArg) On(c cond.Condition) *optionArg {
 
 func (arg *optionArg) call(ctx Context) (reflect.Value, error) {
 
-	// TODO 也许可以通过参数传递 *gs.Logger 对象
-	if arg.logger == nil {
-		arg.logger = log.GetLogger(utils.TypeName(arg))
-	}
-
 	var (
 		ok  bool
 		err error
 	)
-
-	/*	arg.logger.Sugar().Debugf("call option func %s", arg.r.fileLine)
-		defer func() {
-			if err == nil {
-				arg.logger.Sugar().Debugf("call option func success %s", arg.r.fileLine)
-			} else {
-				arg.logger.Sugar().Errorf("call option func error %s %s", err.Error(), arg.r.fileLine)
-			}
-		}()*/
 
 	if arg.c != nil {
 		ok, err = ctx.Matches(arg.c)

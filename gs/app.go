@@ -61,16 +61,6 @@ func NewApp() *App {
 
 // Run start app.
 func (app *App) Run(resourceLocator ...ResourceLocator) error {
-	app.logger = GetLogger(utils.TypeName(app))
-
-	// Responding to the Ctrl+C and kill commands in the console.
-	go func() {
-		ch := make(chan os.Signal, 1)
-		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
-		sig := <-ch
-		app.Shutdown(fmt.Sprintf("signal %v", sig))
-	}()
-
 	var locator ResourceLocator = new(FileResourceLocator)
 	if len(resourceLocator) > 0 && resourceLocator[0] != nil {
 		locator = resourceLocator[0]
@@ -99,12 +89,22 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 		return err
 	}
 
+	app.logger = GetLogger("", utils.TypeName(app))
+
 	app.onAppRun(app.container)
 
 	app.onAppStart(app.container)
 
 	app.container.clear()
 	app.logger.Info("application started successfully")
+
+	// Responding to the Ctrl+C and kill commands in the console.
+	go func() {
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+		sig := <-ch
+		app.Shutdown(fmt.Sprintf("signal %v", sig))
+	}()
 
 	<-app.exitChan
 
@@ -188,11 +188,11 @@ func (app *App) printBanner(banner string) {
 
 // Shutdown close application.
 func (app *App) Shutdown(msg ...string) {
-	app.logger.Info(fmt.Sprintf("program will exit %s", strings.Join(msg, ", ")))
 	select {
 	case <-app.exitChan:
 		// app already closed
 	default:
+		app.logger.Info(fmt.Sprintf("program will exit %s", strings.Join(msg, ", ")))
 		close(app.exitChan)
 	}
 }

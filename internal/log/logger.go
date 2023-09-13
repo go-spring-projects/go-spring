@@ -21,12 +21,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync/atomic"
+	"sync"
 )
 
 type Logger = slog.Logger
 
-var defaultLogger atomic.Value
+var loggers sync.Map
 
 func init() {
 	slogOptions := &slog.HandlerOptions{
@@ -51,14 +51,27 @@ func init() {
 			return attr
 		},
 	}
-	defaultLogger.Store(slog.New(slog.NewTextHandler(os.Stdout, slogOptions)))
+	SetLogger("go-spring", slog.New(slog.NewTextHandler(os.Stdout, slogOptions)), true)
 }
 
-func SetLogger(logger *Logger) {
-	defaultLogger.Store(logger)
+type namedLogger struct {
+	name   string
+	logger *Logger
 }
 
-func GetLogger(typeName string) *Logger {
-	logger := defaultLogger.Load().(*Logger)
-	return logger.With("logger", filepath.Base(typeName))
+func SetLogger(loggerName string, logger *Logger, primary ...bool) {
+	named := &namedLogger{name: loggerName, logger: logger}
+	loggers.Store(loggerName, named)
+
+	if len(primary) > 0 && primary[0] {
+		loggers.Store("", named)
+	}
+}
+
+func GetLogger(loggerName string, typeName string) *Logger {
+	if l, ok := loggers.Load(loggerName); ok {
+		named := l.(*namedLogger)
+		return named.logger.With("logger", named.name, "type", filepath.Base(typeName))
+	}
+	return nil
 }

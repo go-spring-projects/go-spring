@@ -20,10 +20,10 @@ import "github.com/limpo1989/go-spring/internal/log"
 
 type Logger = log.Logger
 
-func SetLogger(logger *Logger) {
-	log.SetLogger(logger)
+func SetLogger(loggerName string, logger *Logger, primary ...bool) {
+	log.SetLogger(loggerName, logger, primary...)
 }
 
-func GetLogger(typeName string) *Logger {
-	return log.GetLogger(typeName)
+func GetLogger(loggerName string, typeName string) *Logger {
+	return log.GetLogger(loggerName, typeName)
 }

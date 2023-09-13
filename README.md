@@ -15,7 +15,8 @@ This project based from [go-spring/go-spring](https://github.com/go-spring/go-sp
 * Switch to monolithic repository.
 * Remove third-party modules and retain only the core dependency injection functionality.
 * Invoke `AppRunner` and `AppEvent` in the order of their dependencies.
-* Expand the dynamic property types like `Array`/`Map`/`Value`.
+* Add the dynamic property types like `Array`/`Map`/`Value`.
+* Add named logger.
 
 ### IoC container
 
