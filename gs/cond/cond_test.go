@@ -237,7 +237,7 @@ func TestOnBean(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ctx := NewMockContext(ctrl)
-		ctx.EXPECT().Find("a").Return([]utils.BeanDefinition{
+		ctx.EXPECT().Find("a").Return([]BeanDefinition{
 			utils.NewMockBeanDefinition(nil),
 		}, nil)
 		ok, err := OnBean("a").Matches(ctx)
@@ -248,7 +248,7 @@ func TestOnBean(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ctx := NewMockContext(ctrl)
-		ctx.EXPECT().Find("a").Return([]utils.BeanDefinition{
+		ctx.EXPECT().Find("a").Return([]BeanDefinition{
 			utils.NewMockBeanDefinition(nil),
 			utils.NewMockBeanDefinition(nil),
 		}, nil)
@@ -281,7 +281,7 @@ func TestOnMissingBean(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ctx := NewMockContext(ctrl)
-		ctx.EXPECT().Find("a").Return([]utils.BeanDefinition{
+		ctx.EXPECT().Find("a").Return([]BeanDefinition{
 			utils.NewMockBeanDefinition(nil),
 		}, nil)
 		ok, err := OnMissingBean("a").Matches(ctx)
@@ -292,7 +292,7 @@ func TestOnMissingBean(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ctx := NewMockContext(ctrl)
-		ctx.EXPECT().Find("a").Return([]utils.BeanDefinition{
+		ctx.EXPECT().Find("a").Return([]BeanDefinition{
 			utils.NewMockBeanDefinition(nil),
 			utils.NewMockBeanDefinition(nil),
 		}, nil)
@@ -325,7 +325,7 @@ func TestOnSingleBean(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ctx := NewMockContext(ctrl)
-		ctx.EXPECT().Find("a").Return([]utils.BeanDefinition{
+		ctx.EXPECT().Find("a").Return([]BeanDefinition{
 			utils.NewMockBeanDefinition(nil),
 		}, nil)
 		ok, err := OnSingleBean("a").Matches(ctx)
@@ -336,7 +336,7 @@ func TestOnSingleBean(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ctx := NewMockContext(ctrl)
-		ctx.EXPECT().Find("a").Return([]utils.BeanDefinition{
+		ctx.EXPECT().Find("a").Return([]BeanDefinition{
 			utils.NewMockBeanDefinition(nil),
 			utils.NewMockBeanDefinition(nil),
 		}, nil)

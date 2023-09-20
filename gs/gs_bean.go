@@ -86,16 +86,16 @@ type BeanDefinition struct {
 	file string // 注册点所在文件
 	line int    // 注册点所在行数
 
-	name    string               // 名称
-	status  beanStatus           // 状态
-	primary bool                 // 是否为主版本
-	method  bool                 // 是否为成员方法
-	cond    cond.Condition       // 判断条件
-	order   float32              // 收集时的顺序
-	init    interface{}          // 初始化函数
-	destroy interface{}          // 销毁函数
-	depends []utils.BeanSelector // 间接依赖项
-	exports []reflect.Type       // 导出的接口
+	name    string         // 名称
+	status  beanStatus     // 状态
+	primary bool           // 是否为主版本
+	method  bool           // 是否为成员方法
+	cond    cond.Condition // 判断条件
+	order   float32        // 收集时的顺序
+	init    interface{}    // 初始化函数
+	destroy interface{}    // 销毁函数
+	depends []BeanSelector // 间接依赖项
+	exports []reflect.Type // 导出的接口
 }
 
 // Type Return the type of the bean.
@@ -190,7 +190,7 @@ func (d *BeanDefinition) Order(order float32) *BeanDefinition {
 }
 
 // DependsOn Set the indirect dependencies for a bean.
-func (d *BeanDefinition) DependsOn(selectors ...utils.BeanSelector) *BeanDefinition {
+func (d *BeanDefinition) DependsOn(selectors ...BeanSelector) *BeanDefinition {
 	d.depends = append(d.depends, selectors...)
 	return d
 }

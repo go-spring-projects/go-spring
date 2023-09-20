@@ -48,7 +48,7 @@ func (c *container) Bind(i interface{}, args ...conf.BindArg) error {
 
 // Find the bean objects that meet the specified conditions. Note that this function can only guarantee that the returned beans are valid, i.e.,
 // not marked for deletion, but it cannot guarantee that property binding and dependency injection have been completed.
-func (c *container) Find(selector utils.BeanSelector) ([]utils.BeanDefinition, error) {
+func (c *container) Find(selector BeanSelector) ([]utils.BeanDefinition, error) {
 	beans, err := c.findBean(selector)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (c *container) Find(selector utils.BeanSelector) ([]utils.BeanDefinition, e
 // When i is an array or slice, it also represents retrieving any number of bean objects. However, it sorts the retrieved bean objects. If no selector is provided or the selector is "*",
 // it sorts the bean objects based on the order value of the beans. This mode is called automatic mode. Otherwise, it sorts the bean objects based on the provided selector list. This mode is called assigned mode.
 // The difference between this method and the Find method is that Get guarantees that all returned bean objects have completed property binding and dependency injection, while Find only guarantees that the returned bean objects are valid, i.e., not marked for deletion.
-func (c *container) Get(i interface{}, selectors ...utils.BeanSelector) error {
+func (c *container) Get(i interface{}, selectors ...BeanSelector) error {
 
 	if i == nil {
 		return errors.New("i can't be nil")

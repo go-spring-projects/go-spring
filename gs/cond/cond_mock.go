@@ -9,7 +9,6 @@ import (
 
 	conf "github.com/limpo1989/go-spring/conf"
 	gomock "github.com/golang/mock/gomock"
-	"github.com/limpo1989/go-spring/internal/utils"
 )
 
 // MockContext is a mock of Context interface.
@@ -36,10 +35,10 @@ func (m *MockContext) EXPECT() *MockContextMockRecorder {
 }
 
 // Find mocks base method.
-func (m *MockContext) Find(selector utils.BeanSelector) ([]utils.BeanDefinition, error) {
+func (m *MockContext) Find(selector BeanSelector) ([]BeanDefinition, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Find", selector)
-	ret0, _ := ret[0].([]utils.BeanDefinition)
+	ret0, _ := ret[0].([]BeanDefinition)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

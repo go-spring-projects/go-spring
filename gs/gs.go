@@ -51,6 +51,8 @@ var (
 	contextType = reflect.TypeOf((*Context)(nil)).Elem()
 )
 
+type BeanSelector = utils.BeanSelector
+
 type Container interface {
 	Context() context.Context
 	Properties() *dync.Properties
@@ -69,7 +71,7 @@ type Context interface {
 	Prop(key string, opts ...conf.GetOption) string
 	Resolve(s string) (string, error)
 	Bind(i interface{}, args ...conf.BindArg) error
-	Get(i interface{}, selectors ...utils.BeanSelector) error
+	Get(i interface{}, selectors ...BeanSelector) error
 	Wire(objOrCtor interface{}, ctorArgs ...arg.Arg) (interface{}, error)
 	Invoke(fn interface{}, args ...arg.Arg) ([]interface{}, error)
 	Go(fn func(ctx context.Context))
@@ -460,7 +462,7 @@ func (tag wireTag) String() string {
 	return b.String()
 }
 
-func toWireTag(selector utils.BeanSelector) wireTag {
+func toWireTag(selector BeanSelector) wireTag {
 	switch s := selector.(type) {
 	case string:
 		return parseWireTag(s)
@@ -486,7 +488,7 @@ func toWireString(tags []wireTag) string {
 
 // findBean 查找符合条件的 bean 对象，注意该函数只能保证返回的 bean 是有效的，
 // 即未被标记为删除的，而不能保证已经完成属性绑定和依赖注入。
-func (c *container) findBean(selector utils.BeanSelector) ([]*BeanDefinition, error) {
+func (c *container) findBean(selector BeanSelector) ([]*BeanDefinition, error) {
 
 	finder := func(fn func(*BeanDefinition) bool) ([]*BeanDefinition, error) {
 		var result []*BeanDefinition

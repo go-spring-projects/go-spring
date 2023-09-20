@@ -724,7 +724,7 @@ func TestApplicationContext_DependsOn(t *testing.T) {
 
 	t.Run("dependsOn", func(t *testing.T) {
 
-		dependsOn := []utils.BeanSelector{
+		dependsOn := []BeanSelector{
 			(*BeanOne)(nil), // 通过类型定义查找
 			"github.com/limpo1989/go-spring/gs/gs.BeanZero:BeanZero",
 		}

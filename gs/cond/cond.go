@@ -33,6 +33,9 @@ import (
 // UnimplementedMethod throws this error when calling an unimplemented method.
 var UnimplementedMethod = errors.New("unimplemented method")
 
+type BeanSelector = utils.BeanSelector
+type BeanDefinition = utils.BeanDefinition
+
 // Context defines some methods of IoC container that conditions use.
 type Context interface {
 	// Has returns whether the IoC container has a property.
@@ -41,7 +44,7 @@ type Context interface {
 	// returns empty string when the IoC container doesn't have it.
 	Prop(key string, opts ...conf.GetOption) string
 	// Find returns bean definitions that matched with the bean selector.
-	Find(selector utils.BeanSelector) ([]utils.BeanDefinition, error)
+	Find(selector BeanSelector) ([]BeanDefinition, error)
 }
 
 // Condition is used when registering a bean to determine whether it's valid.
@@ -137,7 +140,7 @@ func (c *onMissingProperty) Matches(ctx Context) (bool, error) {
 
 // onBean is a Condition that returns true when finding more than one beans.
 type onBean struct {
-	selector utils.BeanSelector
+	selector BeanSelector
 }
 
 func (c *onBean) Matches(ctx Context) (bool, error) {
@@ -147,7 +150,7 @@ func (c *onBean) Matches(ctx Context) (bool, error) {
 
 // onMissingBean is a Condition that returns true when finding no beans.
 type onMissingBean struct {
-	selector utils.BeanSelector
+	selector BeanSelector
 }
 
 func (c *onMissingBean) Matches(ctx Context) (bool, error) {
@@ -157,7 +160,7 @@ func (c *onMissingBean) Matches(ctx Context) (bool, error) {
 
 // onSingleBean is a Condition that returns true when finding only one bean.
 type onSingleBean struct {
-	selector utils.BeanSelector
+	selector BeanSelector
 }
 
 func (c *onSingleBean) Matches(ctx Context) (bool, error) {
@@ -367,34 +370,34 @@ func (c *conditional) OnMissingProperty(name string) *conditional {
 
 // OnBean returns a conditional that starts with a Condition that returns true when
 // finding more than one beans.
-func OnBean(selector utils.BeanSelector) *conditional {
+func OnBean(selector BeanSelector) *conditional {
 	return New().OnBean(selector)
 }
 
 // OnBean adds a Condition that returns true when finding more than one beans.
-func (c *conditional) OnBean(selector utils.BeanSelector) *conditional {
+func (c *conditional) OnBean(selector BeanSelector) *conditional {
 	return c.On(&onBean{selector: selector})
 }
 
 // OnMissingBean returns a conditional that starts with a Condition that returns
 // true when finding no beans.
-func OnMissingBean(selector utils.BeanSelector) *conditional {
+func OnMissingBean(selector BeanSelector) *conditional {
 	return New().OnMissingBean(selector)
 }
 
 // OnMissingBean adds a Condition that returns true when finding no beans.
-func (c *conditional) OnMissingBean(selector utils.BeanSelector) *conditional {
+func (c *conditional) OnMissingBean(selector BeanSelector) *conditional {
 	return c.On(&onMissingBean{selector: selector})
 }
 
 // OnSingleBean returns a conditional that starts with a Condition that returns
 // true when finding only one bean.
-func OnSingleBean(selector utils.BeanSelector) *conditional {
+func OnSingleBean(selector BeanSelector) *conditional {
 	return New().OnSingleBean(selector)
 }
 
 // OnSingleBean adds a Condition that returns true when finding only one bean.
-func (c *conditional) OnSingleBean(selector utils.BeanSelector) *conditional {
+func (c *conditional) OnSingleBean(selector BeanSelector) *conditional {
 	return c.On(&onSingleBean{selector: selector})
 }
 
