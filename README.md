@@ -4,8 +4,8 @@
 
 <!--[![Downloads][7]][8]-->
 
-[1]: https://godoc.org/github.com/limpo1989/go-spring?status.svg
-[2]: https://godoc.org/github.com/limpo1989/go-spring
+[1]: https://godoc.org/github.com/go-spring-projects/go-spring?status.svg
+[2]: https://godoc.org/github.com/go-spring-projects/go-spring
 [3]: https://img.shields.io/badge/license-Apache%202-blue.svg
 [4]: LICENSE
 
