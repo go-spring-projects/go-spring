@@ -19,7 +19,7 @@ package internal
 import (
 	"fmt"
 
-	"github.com/limpo1989/go-spring/internal/utils"
+	"github.com/go-spring-projects/go-spring/internal/utils"
 )
 
 type nodeType int

@@ -24,5 +24,5 @@ import (
 type SamePkg struct{}
 
 func (p *SamePkg) Package() {
-	fmt.Println("github.com/limpo1989/go-spring/internal/utils/testdata/pkg/foo/pkg.SamePkg")
+	fmt.Println("github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo/pkg.SamePkg")
 }

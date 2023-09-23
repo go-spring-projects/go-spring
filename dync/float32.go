@@ -21,7 +21,7 @@ import (
 	"math"
 	"sync/atomic"
 
-	"github.com/limpo1989/go-spring/conf"
+	"github.com/go-spring-projects/go-spring/conf"
 )
 
 var _ conf.Value = (*Float32)(nil)

@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/limpo1989/go-spring/conf"
+	"github.com/go-spring-projects/go-spring/conf"
 )
 
 // EnvPrefix 属性覆盖的环境变量需要携带该前缀。

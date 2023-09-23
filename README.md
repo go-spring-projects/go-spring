@@ -18,6 +18,9 @@ This project based from [go-spring/go-spring](https://github.com/go-spring/go-sp
 * Add the dynamic property types like `Array`/`Map`/`Value`.
 * Add named logger.
 
+### Install
+`go get github.com/go-spring-projects/go-spring@latest`
+
 ### IoC container
 
 In addition to implementing a powerful IoC container similar to Java Spring, Go-Spring also extends the concept of beans. In Go, objects (pointers), arrays, maps, and function pointers can all be considered beans and can be placed in the IoC container.

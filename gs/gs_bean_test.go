@@ -23,11 +23,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/limpo1989/go-spring/gs/arg"
-	pkg1 "github.com/limpo1989/go-spring/gs/testdata/pkg/bar"
-	pkg2 "github.com/limpo1989/go-spring/gs/testdata/pkg/foo"
-	"github.com/limpo1989/go-spring/internal/utils"
-	"github.com/limpo1989/go-spring/internal/utils/assert"
+	"github.com/go-spring-projects/go-spring/gs/arg"
+	pkg1 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar"
+	pkg2 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo"
+	"github.com/go-spring-projects/go-spring/internal/utils"
+	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 )
 
 // newBean 该方法是为了平衡调用栈的深度，一般情况下 gs.NewBean 不应该被直接使用。
@@ -112,18 +112,18 @@ func TestBeanDefinition_Match(t *testing.T) {
 		beanName string
 		expect   bool
 	}{
-		{newBean(new(pkg2.SamePkg)), "github.com/limpo1989/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "SamePkg", true},
+		{newBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "SamePkg", true},
 		{newBean(new(pkg2.SamePkg)), "", "SamePkg", true},
-		{newBean(new(pkg2.SamePkg)), "github.com/limpo1989/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "", true},
-		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/limpo1989/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
+		{newBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "", true},
+		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
 		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "", "pkg2", true},
-		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/limpo1989/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
-		{newBean(new(pkg1.SamePkg)), "github.com/limpo1989/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "SamePkg", true},
+		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
+		{newBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "SamePkg", true},
 		{newBean(new(pkg1.SamePkg)), "", "SamePkg", true},
-		{newBean(new(pkg1.SamePkg)), "github.com/limpo1989/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "", true},
-		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/limpo1989/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
+		{newBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "", true},
+		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
 		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "", "pkg1", true},
-		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/limpo1989/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
+		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
 	}
 
 	for i, s := range data {
@@ -192,17 +192,17 @@ func TestObjectBean(t *testing.T) {
 
 			newBean(newHistoryTeacher("")): {
 				"historyTeacher",
-				"github.com/limpo1989/go-spring/gs/gs.historyTeacher",
+				"github.com/go-spring-projects/go-spring/gs/gs.historyTeacher",
 			},
 
 			newBean(new(pkg2.SamePkg)): {
 				"SamePkg",
-				"github.com/limpo1989/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
+				"github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
 			},
 
 			newBean(new(pkg2.SamePkg)).Name("pkg2"): {
 				"pkg2",
-				"github.com/limpo1989/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
+				"github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
 			},
 		}
 

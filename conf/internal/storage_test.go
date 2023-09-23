@@ -19,7 +19,7 @@ package internal
 import (
 	"testing"
 
-	"github.com/limpo1989/go-spring/internal/utils/assert"
+	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 )
 
 func TestStorage(t *testing.T) {

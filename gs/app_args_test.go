@@ -19,8 +19,8 @@ package gs
 import (
 	"testing"
 
-	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/internal/utils/assert"
+	"github.com/go-spring-projects/go-spring/conf"
+	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 )
 
 func TestLoadCmdArgs(t *testing.T) {

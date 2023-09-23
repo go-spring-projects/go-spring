@@ -21,7 +21,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/limpo1989/go-spring/conf"
+	"github.com/go-spring-projects/go-spring/conf"
 )
 
 type Configuration struct {

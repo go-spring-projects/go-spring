@@ -20,8 +20,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 	"github.com/golang/mock/gomock"
-	"github.com/limpo1989/go-spring/internal/utils/assert"
 )
 
 func TestBind(t *testing.T) {

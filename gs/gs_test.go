@@ -29,13 +29,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/gs/arg"
-	"github.com/limpo1989/go-spring/gs/cond"
-	pkg1 "github.com/limpo1989/go-spring/gs/testdata/pkg/bar"
-	pkg2 "github.com/limpo1989/go-spring/gs/testdata/pkg/foo"
-	"github.com/limpo1989/go-spring/internal/utils"
-	"github.com/limpo1989/go-spring/internal/utils/assert"
+	"github.com/go-spring-projects/go-spring/conf"
+	"github.com/go-spring-projects/go-spring/gs/arg"
+	"github.com/go-spring-projects/go-spring/gs/cond"
+	pkg1 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar"
+	pkg2 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo"
+	"github.com/go-spring-projects/go-spring/internal/utils"
+	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 	"github.com/spf13/cast"
 )
 
@@ -393,7 +393,7 @@ type Pkg interface {
 
 type SamePkgHolder struct {
 	// Pkg `autowire:""` // 这种方式会找到多个符合条件的 Object
-	Pkg `autowire:"github.com/limpo1989/go-spring/gs/testdata/pkg/bar/pkg.SamePkg:SamePkg"`
+	Pkg `autowire:"github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg:SamePkg"`
 }
 
 func TestApplicationContext_SameNameBean(t *testing.T) {
@@ -409,19 +409,19 @@ type DiffPkgOne struct {
 }
 
 func (d *DiffPkgOne) Package() {
-	fmt.Println("github.com/limpo1989/go-spring/gs.DiffPkgOne")
+	fmt.Println("github.com/go-spring-projects/go-spring/gs.DiffPkgOne")
 }
 
 type DiffPkgTwo struct {
 }
 
 func (d *DiffPkgTwo) Package() {
-	fmt.Println("github.com/limpo1989/go-spring/gs.DiffPkgTwo")
+	fmt.Println("github.com/go-spring-projects/go-spring/gs.DiffPkgTwo")
 }
 
 type DiffPkgHolder struct {
 	// Pkg `autowire:"same"` // 如果两个 Object 不小心重名了，也会找到多个符合条件的 Object
-	Pkg `autowire:"github.com/limpo1989/go-spring/gs/gs.DiffPkgTwo:same"`
+	Pkg `autowire:"github.com/go-spring-projects/go-spring/gs/gs.DiffPkgTwo:same"`
 }
 
 func TestApplicationContext_DiffNameBean(t *testing.T) {
@@ -517,10 +517,10 @@ func TestApplicationContext_Get(t *testing.T) {
 			err = p.Get(&grouper, ":BeanTwo")
 			assert.Nil(t, err)
 
-			err = p.Get(&two, "github.com/limpo1989/go-spring/gs/gs.BeanTwo:BeanTwo")
+			err = p.Get(&two, "github.com/go-spring-projects/go-spring/gs/gs.BeanTwo:BeanTwo")
 			assert.Nil(t, err)
 
-			err = p.Get(&grouper, "github.com/limpo1989/go-spring/gs/gs.BeanTwo:BeanTwo")
+			err = p.Get(&grouper, "github.com/go-spring-projects/go-spring/gs/gs.BeanTwo:BeanTwo")
 			assert.Nil(t, err)
 
 			err = p.Get(&two, "xxx:BeanTwo")
@@ -562,7 +562,7 @@ func TestApplicationContext_Get(t *testing.T) {
 //	fmt.Println(utils.ToJsonString(b))
 //	assert.Equal(t, len(b), 1)
 //
-//	b, _ = p.Find("github.com/limpo1989/go-spring/gs/gs.BeanTwo:BeanTwo")
+//	b, _ = p.Find("github.com/go-spring-projects/go-spring/gs/gs.BeanTwo:BeanTwo")
 //	fmt.Println(utils.ToJsonString(b))
 //	assert.Equal(t, len(b), 1)
 //
@@ -726,7 +726,7 @@ func TestApplicationContext_DependsOn(t *testing.T) {
 
 		dependsOn := []BeanSelector{
 			(*BeanOne)(nil), // 通过类型定义查找
-			"github.com/limpo1989/go-spring/gs/gs.BeanZero:BeanZero",
+			"github.com/go-spring-projects/go-spring/gs/gs.BeanZero:BeanZero",
 		}
 
 		c := New()

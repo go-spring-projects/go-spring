@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/limpo1989/go-spring/conf"
-	"github.com/limpo1989/go-spring/gs/arg"
-	"github.com/limpo1989/go-spring/internal/utils"
+	"github.com/go-spring-projects/go-spring/conf"
+	"github.com/go-spring-projects/go-spring/gs/arg"
+	"github.com/go-spring-projects/go-spring/internal/utils"
 )
 
 func (c *container) Keys() []string {

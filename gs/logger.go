@@ -16,7 +16,7 @@
 
 package gs
 
-import "github.com/limpo1989/go-spring/internal/log"
+import "github.com/go-spring-projects/go-spring/internal/log"
 
 type Logger = log.Logger
 
