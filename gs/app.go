@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -158,12 +157,11 @@ func (app *App) getBanner(p *conf.Properties) string {
 	}
 
 	var splitter = strings.Repeat("-", maxPadding)
-	var appRuntime = fmt.Sprintf("%s %s/%s", runtime.Version(), runtime.GOOS, runtime.GOARCH)
 
 	var sb strings.Builder
 	sb.WriteString(Banner)
 
-	for _, info := range []string{Website, Version, appRuntime} {
+	for _, info := range []string{Website, Version} {
 		if len(info) > 0 {
 			sb.WriteString("\n")
 			if chars := utf8.RuneCountInString(info); maxPadding > chars {
@@ -179,11 +177,7 @@ func (app *App) getBanner(p *conf.Properties) string {
 
 // printBanner print banner to console.
 func (app *App) printBanner(banner string) {
-	if banner[0] != '\n' {
-		fmt.Println()
-	}
 	fmt.Println(banner)
-	fmt.Println()
 }
 
 // Shutdown close application.

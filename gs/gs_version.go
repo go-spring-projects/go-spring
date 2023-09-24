@@ -21,9 +21,9 @@ import (
 	"strings"
 )
 
-const Website = "https://github.com/limpo1989/go-spring"
+const Website = "https://go-spring.dev"
 
-var Version = "go-spring"
+var Version = "v0.0.0"
 
 var Banner = `
   ______  _____      _______  _____   ______ _____ __   _  ______
@@ -35,7 +35,7 @@ func init() {
 	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		for _, pkg := range buildInfo.Deps {
 			if strings.HasPrefix(pkg.Path, "github.com/go-spring-projects/go-spring") {
-				Version = "go-spring@" + pkg.Version
+				Version = pkg.Version
 				break
 			}
 		}
