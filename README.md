@@ -1,14 +1,16 @@
+
+
+
 # Go-Spring
 
 [![GoDoc][1]][2] [![license-Apache 2][3]][4]
-
-<!--[![Downloads][7]][8]-->
 
 [1]: https://godoc.org/github.com/go-spring-projects/go-spring?status.svg
 [2]: https://godoc.org/github.com/go-spring-projects/go-spring
 [3]: https://img.shields.io/badge/license-Apache%202-blue.svg
 [4]: LICENSE
 
+<img align="right" width="159px" src="logo.svg"/>
 `Go-Spring` vision is to empower Go programmers with a powerful programming framework similar to Java `Spring`. It is dedicated to providing users with a simple, secure, and reliable programming experience.
 
 This project based from [go-spring/go-spring](https://github.com/go-spring/go-spring) created by [lvan100](https://github.com/lvan100)
