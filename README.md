@@ -14,6 +14,7 @@
 `Go-Spring` vision is to empower Go programmers with a powerful programming framework similar to Java `Spring`. It is dedicated to providing users with a simple, secure, and reliable programming experience.
 
 This project based from [go-spring/go-spring](https://github.com/go-spring/go-spring) created by [lvan100](https://github.com/lvan100)
+
 * Switch to monolithic repository.
 * Remove third-party modules and retain only the core dependency injection functionality.
 * Invoke `AppRunner` and `AppEvent` in the order of their dependencies.
