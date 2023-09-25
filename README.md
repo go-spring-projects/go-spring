@@ -1,6 +1,6 @@
 # Go-Spring
 
-[![GoDoc][1]][2] [![Build Status][7]][8] [![Release][5]][6] [![license-Apache 2][3]][4]
+[![GoDoc][1]][2] [![Build Status][7]][8] [![Codecov][9]][10] [![Release][5]][6] [![license-Apache 2][3]][4]
 
 [1]: https://godoc.org/github.com/go-spring-projects/go-spring?status.svg
 [2]: https://godoc.org/github.com/go-spring-projects/go-spring
@@ -10,6 +10,8 @@
 [6]: https://github.com/go-spring-projects/go-spring/releases/latest
 [7]: https://github.com/go-spring-projects/go-spring/workflows/Go%20Test/badge.svg?branch=master
 [8]: https://github.com/go-spring-projects/go-spring/actions?query=branch%3Amaster
+[9]: https://codecov.io/gh/go-spring-projects/go-spring/graph/badge.svg?token=BQ6OKWWOF0
+[10]: https://codecov.io/gh/go-spring-projects/go-spring
 
 <img align="right" width="159px" src="logo.svg"/>
 
