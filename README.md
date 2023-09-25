@@ -1,6 +1,3 @@
-
-
-
 # Go-Spring
 
 [![GoDoc][1]][2] [![license-Apache 2][3]][4]
