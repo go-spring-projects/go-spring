@@ -31,7 +31,7 @@ func TestRegisterConverter(t *testing.T) {
 func TestLoad(t *testing.T) {
 
 	_, err := Load("nonexisting.yaml")
-	assert.Error(t, err, "The system cannot find the file specified")
+	assert.Error(t, err, "The system cannot find the file specified|open nonexisting.yaml: no such file or directory")
 
 	_, err = Load("testdata/application.xyz")
 	assert.Error(t, err, "unsupported file type \\.xyz")
