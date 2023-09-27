@@ -24,7 +24,7 @@ import (
 	"github.com/go-spring-projects/go-spring/conf"
 )
 
-// EnvPrefix 属性覆盖的环境变量需要携带该前缀。
+// EnvPrefix environment variable prefix。
 const EnvPrefix = "GS_"
 
 // loadCmdArgs 加载以 -D key=value 或者 -D key[=true] 形式传入的命令行参数。

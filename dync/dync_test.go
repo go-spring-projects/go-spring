@@ -132,4 +132,27 @@ func TestDynamic(t *testing.T) {
 		assert.Nil(t, err)
 	})
 
+	t.Run("set value error", func(t *testing.T) {
+		p, cfg, err := newTest()
+		assert.Nil(t, err)
+		b, _ := json.Marshal(cfg)
+		assert.Equal(t, string(b), `{"Int":3,"Float":1.2,"Map":{},"Slice":[]}`)
+
+		err = p.Set("map.name", "jok")
+		assert.Nil(t, err)
+
+		name, exists := cfg.Map.Value()["name"]
+		assert.True(t, exists)
+		assert.Equal(t, name, "jok")
+
+		err = p.Set("map.name[", "jok")
+		assert.Error(t, err, `invalid key \'map\.name\[\'`)
+
+		err = p.Remove("map.name")
+		assert.Nil(t, err)
+
+		_, exists = cfg.Map.Value()["name"]
+		assert.False(t, exists)
+	})
+
 }

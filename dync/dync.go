@@ -75,6 +75,7 @@ func (p *Properties) Bind(i interface{}, args ...conf.BindArg) error {
 	return p.load().Bind(i, args...)
 }
 
+// Set refresh properties value by key.
 func (p *Properties) Set(key, value string) error {
 	prop := p.load().Copy()
 	if err := prop.Set(key, value); nil != err {
@@ -84,6 +85,7 @@ func (p *Properties) Set(key, value string) error {
 	return p.refreshKeys(prop, []string{key})
 }
 
+// Remove delete key from properties.
 func (p *Properties) Remove(key string) error {
 	prop := p.load()
 	coped := conf.New()

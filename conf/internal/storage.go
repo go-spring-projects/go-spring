@@ -73,9 +73,13 @@ func NewStorage() *Storage {
 
 // Copy returns a new copy of the *Storage object.
 func (s *Storage) Copy() *Storage {
+	data := s.Data()
+	if nil == data {
+		data = make(map[string]string)
+	}
 	return &Storage{
 		tree: s.tree.Copy(),
-		data: s.Data(),
+		data: data,
 	}
 }
 
