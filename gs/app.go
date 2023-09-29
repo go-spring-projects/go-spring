@@ -45,7 +45,6 @@ type AppEvent interface {
 
 // App Ioc App
 type App struct {
-	logger    *Logger
 	container *container
 	exitChan  chan struct{}
 }
@@ -88,14 +87,14 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 		return err
 	}
 
-	app.logger = GetLogger("", utils.TypeName(app))
+	var logger = GetLogger("", utils.TypeName(app))
 
 	app.onAppRun(app.container)
 
 	app.onAppStart(app.container)
 
 	app.container.clear()
-	app.logger.Info("application started successfully")
+	logger.Info("application started successfully")
 
 	// Responding to the Ctrl+C and kill commands in the console.
 	go func() {
@@ -111,7 +110,7 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 
 	app.container.Close()
 
-	app.logger.Info("application exited")
+	logger.Info("application exited")
 
 	return nil
 }
@@ -186,7 +185,8 @@ func (app *App) Shutdown(msg ...string) {
 	case <-app.exitChan:
 		// app already closed
 	default:
-		app.logger.Info(fmt.Sprintf("program will exit %s", strings.Join(msg, ", ")))
+		var logger = GetLogger("", utils.TypeName(app))
+		logger.Info(fmt.Sprintf("program will exit %s", strings.Join(msg, ", ")))
 		close(app.exitChan)
 	}
 }
