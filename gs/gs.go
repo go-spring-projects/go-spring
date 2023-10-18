@@ -59,6 +59,7 @@ type Container interface {
 	AllowCircularReferences()
 	Object(i interface{}) *BeanDefinition
 	Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition
+	Configuration(i interface{}) *BeanDefinition
 	Refresh() error
 	Close()
 }
@@ -185,6 +186,81 @@ func (c *container) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 // AllowCircularReferences enable circular-references.
 func (c *container) AllowCircularReferences() {
 	c.allowCircularReferences = true
+}
+
+// Configuration scan that the object `i` has `NewXXX` methods to Ioc container.
+//
+// example:
+//
+// func(x *T) NewFoo() *Foo
+//
+// func(x *T) NewBar(foo *Foo) *Bar
+//
+// func(x *T) NewSubject(bar *Bar) (*Subject, error)
+//
+// func(x *T) NewServer() *gs.BeanDefinition
+func (c *container) Configuration(i interface{}) *BeanDefinition {
+
+	bValue := reflect.ValueOf(i)
+	bType := bValue.Type()
+
+	for j := 0; j < bType.NumMethod(); j++ {
+		method := bType.Method(j)
+		if !strings.HasPrefix(method.Name, "New") {
+			continue
+		}
+
+		switch method.Type.NumOut() {
+		case 1: // func(x *T) NewFoo() *Foo
+			outType := method.Type.Out(0)
+			if !utils.IsBeanType(outType) {
+				continue
+			}
+
+			if outType == bdType {
+				if method.Type.NumIn() != 1 {
+					panic(fmt.Errorf("non-parameter constructor required: %s", method.Type.String()))
+				}
+
+				bdValues := method.Func.Call([]reflect.Value{bValue})
+				bdInst := bdValues[0].Interface()
+				c.Accept(bdInst.(*BeanDefinition))
+			} else {
+				c.Provide(method.Func.Interface())
+			}
+
+		case 2:
+			out0Type := method.Type.Out(0)
+			if !utils.IsBeanType(out0Type) {
+				continue
+			}
+
+			out1Type := method.Type.Out(1)
+			if !utils.IsErrorType(out1Type) {
+				panic(fmt.Errorf("%s: second return type must be error", method.Type.String()))
+			}
+
+			if out0Type == bdType {
+				if method.Type.NumIn() != 1 {
+					panic(fmt.Errorf("non-parameter constructor required: %s", method.Type.String()))
+				}
+
+				bdValues := method.Func.Call([]reflect.Value{bValue})
+				bdInst := bdValues[0].Interface()
+				bdErr := bdValues[1].Interface()
+				if err, ok := bdErr.(error); ok && nil != err {
+					panic(fmt.Errorf("%s: %w", method.Type.String(), err))
+				}
+				c.Accept(bdInst.(*BeanDefinition))
+			} else {
+				c.Provide(method.Func.Interface())
+			}
+		}
+
+		// ignore other methods
+	}
+
+	return c.Accept(NewBean(bValue))
 }
 
 // Dependencies return the dependency order list in either ascending or descending order.

@@ -2949,3 +2949,62 @@ func TestLogLogger(t *testing.T) {
 	assert.Matches(t, stdWriter.String(), "json info message")
 
 }
+
+type testFoo struct {
+	prefix string
+}
+
+type testBar struct {
+	foo *testFoo
+}
+
+type testSubject struct {
+	Bar *testBar `autowire:""`
+}
+
+type testAutoConfiguration struct {
+	Prefix string `value:"${prefix}"`
+}
+
+func (tac *testAutoConfiguration) MakeXX() *testFoo {
+	panic("unreadable code")
+}
+
+func (tac *testAutoConfiguration) NewEmpty() *BeanDefinition {
+	return NewBean(new(struct{})).Name("empty")
+}
+
+func (tac *testAutoConfiguration) NewFoo() *testFoo {
+	return &testFoo{prefix: tac.Prefix}
+}
+
+func (tac *testAutoConfiguration) NewBar(foo *testFoo) (*testBar, error) {
+	return &testBar{foo: foo}, nil
+}
+
+func (tac *testAutoConfiguration) NewSubject() (*BeanDefinition, error) {
+	return NewBean(new(testSubject)).On(cond.OnProperty("open", cond.HavingValue("true"))), nil
+}
+
+type testConfiguration struct {
+	Subject *testSubject `autowire:""`
+}
+
+func TestConfiguration(t *testing.T) {
+	c := New()
+	p := conf.New()
+	p.Set("prefix", "hello")
+	p.Set("open", "true")
+
+	err := c.Properties().Refresh(p)
+	assert.Nil(t, err)
+
+	c.Configuration(new(testAutoConfiguration))
+	bd := c.Object(new(testConfiguration))
+
+	err = c.Refresh()
+	assert.Nil(t, err)
+
+	subject := bd.Interface().(*testConfiguration)
+	assert.Equal(t, subject.Subject.Bar.foo.prefix, "hello")
+}

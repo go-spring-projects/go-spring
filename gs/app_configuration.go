@@ -24,17 +24,17 @@ import (
 	"github.com/go-spring-projects/go-spring/conf"
 )
 
-type Configuration struct {
+type AppConfiguration struct {
 	resourceLocator  ResourceLocator
 	ActiveProfiles   []string `value:"${spring.config.profiles:=}"`
 	ConfigExtensions []string `value:"${spring.config.extensions:=.properties,.yaml,.yml,.toml,.tml}"`
 }
 
-func NewConfiguration(resourceLocator ResourceLocator) *Configuration {
-	return &Configuration{resourceLocator: resourceLocator}
+func NewAppConfiguration(resourceLocator ResourceLocator) *AppConfiguration {
+	return &AppConfiguration{resourceLocator: resourceLocator}
 }
 
-func (e *Configuration) Load(props *conf.Properties) error {
+func (e *AppConfiguration) Load(props *conf.Properties) error {
 	p := conf.New()
 
 	if err := loadSystemEnv(p); err != nil {
@@ -62,7 +62,7 @@ func (e *Configuration) Load(props *conf.Properties) error {
 	return nil
 }
 
-func (e *Configuration) loadProperties(props *conf.Properties) error {
+func (e *AppConfiguration) loadProperties(props *conf.Properties) error {
 	var resources []Resource
 
 	for _, ext := range e.ConfigExtensions {
@@ -106,7 +106,7 @@ func (e *Configuration) loadProperties(props *conf.Properties) error {
 	return nil
 }
 
-func (e *Configuration) loadResource(filename string) ([]Resource, error) {
+func (e *AppConfiguration) loadResource(filename string) ([]Resource, error) {
 
 	var locators []ResourceLocator
 	locators = append(locators, e.resourceLocator)

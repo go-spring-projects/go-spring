@@ -69,7 +69,7 @@ func (app *App) Run(resourceLocator ...ResourceLocator) error {
 
 func (app *App) run(resourceLocator ResourceLocator) error {
 
-	e := NewConfiguration(resourceLocator)
+	e := NewAppConfiguration(resourceLocator)
 
 	if err := e.Load(app.container.props); nil != err {
 		return err
@@ -216,7 +216,17 @@ func (app *App) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
 	return app.container.Accept(NewBean(ctor, args...))
 }
 
+// Configuration scan that the object `i` has `NewXXX` methods to Ioc container.
+func (app *App) Configuration(i interface{}) *BeanDefinition {
+	return app.container.Configuration(i)
+}
+
 // AllowCircularReferences enable circular-references.
 func (app *App) AllowCircularReferences() {
 	app.container.AllowCircularReferences()
+}
+
+// Go start a goroutine managed by the IoC container.
+func (app *App) Go(fn func(ctx context.Context)) {
+	app.container.Go(fn)
 }

@@ -29,6 +29,7 @@ In addition to implementing a powerful IoC container similar to Java Spring, Go-
 | `@Value` 								                     | `value:"${}"` 				             |
 | `@Autowired` `@Qualifier` `@Required` | `autowire:"?"` 				            |
 | `@Configurable` 						                | `WireBean()` 					             |
+| `@Configuration`                      | `Configuration()`              |
 | `@Profile` 							                    | `ConditionOnProfile()` 		      |
 | `@Primary` 							                    | `Primary()` 					              |
 | `@DependsOn` 							                  | `DependsOn()` 				             |

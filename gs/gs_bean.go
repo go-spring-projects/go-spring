@@ -98,6 +98,9 @@ type BeanDefinition struct {
 	exports []reflect.Type // 导出的接口
 }
 
+// bdType type of *BeanDefinition
+var bdType = reflect.TypeOf((*BeanDefinition)(nil))
+
 // Type Return the type of the bean.
 func (d *BeanDefinition) Type() reflect.Type {
 	return d.t

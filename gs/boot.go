@@ -56,25 +56,30 @@ func Property(key string, fn interface{}) {
 
 // Accept register bean to Ioc container.
 func Accept(b *BeanDefinition) *BeanDefinition {
-	return bootApp.container.Accept(b)
+	return bootApp.Accept(b)
 }
 
 // Object register bean to Ioc container.
 func Object(i interface{}) *BeanDefinition {
-	return bootApp.container.Accept(NewBean(reflect.ValueOf(i)))
+	return bootApp.Accept(NewBean(reflect.ValueOf(i)))
 }
 
 // Provide register bean to Ioc container.
 func Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return bootApp.container.Accept(NewBean(ctor, args...))
+	return bootApp.Accept(NewBean(ctor, args...))
+}
+
+// Configuration scan the object `i` has `NewXXX` methods to Ioc container.
+func Configuration(i interface{}) *BeanDefinition {
+	return bootApp.Configuration(i)
 }
 
 // Go start a goroutine managed by the IoC container.
 func Go(fn func(ctx context.Context)) {
-	bootApp.container.Go(fn)
+	bootApp.Go(fn)
 }
 
 // AllowCircularReferences enable circular-references.
 func AllowCircularReferences() {
-	bootApp.container.AllowCircularReferences()
+	bootApp.AllowCircularReferences()
 }
