@@ -263,7 +263,7 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 		// 修改注册行号信息为父级bean注册位置
 		bd.file, bd.line = parentBean.file, parentBean.line
 		// 依赖父级bean
-		bd.On(cond.OnBean(parentBean.ID()))
+		bd.DependsOn(parentBean.ID()).On(cond.OnBean(parentBean.ID()))
 	}
 
 	return parentBean
