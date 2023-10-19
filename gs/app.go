@@ -208,17 +208,21 @@ func (app *App) Accept(b *BeanDefinition) *BeanDefinition {
 
 // Object register object bean to Ioc container.
 func (app *App) Object(i interface{}) *BeanDefinition {
-	return app.container.Accept(NewBean(reflect.ValueOf(i)))
+	return app.container.Accept(NewBean(reflect.ValueOf(i)).Caller(2))
 }
 
 // Provide register method bean to Ioc container.
 func (app *App) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return app.container.Accept(NewBean(ctor, args...))
+	return app.container.Accept(NewBean(ctor, args...).Caller(2))
 }
 
 // Configuration scan that the object `i` has `NewXXX` methods to Ioc container.
 func (app *App) Configuration(i interface{}) *BeanDefinition {
-	return app.container.Configuration(i)
+	bd, ok := i.(*BeanDefinition)
+	if !ok {
+		bd = NewBean(i).Caller(2)
+	}
+	return app.container.Configuration(bd)
 }
 
 // AllowCircularReferences enable circular-references.

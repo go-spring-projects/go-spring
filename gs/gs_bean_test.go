@@ -23,17 +23,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/gs/arg"
 	pkg1 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar"
 	pkg2 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo"
 	"github.com/go-spring-projects/go-spring/internal/utils"
 	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 )
-
-// newBean 该方法是为了平衡调用栈的深度，一般情况下 gs.NewBean 不应该被直接使用。
-func newBean(objOrCtor interface{}, ctorArgs ...arg.Arg) *BeanDefinition {
-	return NewBean(objOrCtor, ctorArgs...)
-}
 
 //func TestParseSingletonTag(t *testing.T) {
 //
@@ -112,18 +106,18 @@ func TestBeanDefinition_Match(t *testing.T) {
 		beanName string
 		expect   bool
 	}{
-		{newBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "SamePkg", true},
-		{newBean(new(pkg2.SamePkg)), "", "SamePkg", true},
-		{newBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "", true},
-		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
-		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "", "pkg2", true},
-		{newBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
-		{newBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "SamePkg", true},
-		{newBean(new(pkg1.SamePkg)), "", "SamePkg", true},
-		{newBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "", true},
-		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
-		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "", "pkg1", true},
-		{newBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
+		{NewBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "SamePkg", true},
+		{NewBean(new(pkg2.SamePkg)), "", "SamePkg", true},
+		{NewBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "", true},
+		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
+		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "", "pkg2", true},
+		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
+		{NewBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "SamePkg", true},
+		{NewBean(new(pkg1.SamePkg)), "", "SamePkg", true},
+		{NewBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "", true},
+		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
+		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "", "pkg1", true},
+		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
 	}
 
 	for i, s := range data {
@@ -161,12 +155,12 @@ func TestObjectBean(t *testing.T) {
 	t.Run("bean must be ref type", func(t *testing.T) {
 
 		data := []func(){
-			func() { newBean([...]int{0}) },
-			func() { newBean(false) },
-			func() { newBean(3) },
-			func() { newBean("3") },
-			func() { newBean(BeanZero{}) },
-			func() { newBean(pkg2.SamePkg{}) },
+			func() { NewBean([...]int{0}) },
+			func() { NewBean(false) },
+			func() { NewBean(3) },
+			func() { NewBean("3") },
+			func() { NewBean(BeanZero{}) },
+			func() { NewBean(pkg2.SamePkg{}) },
 		}
 
 		for _, fn := range data {
@@ -175,9 +169,9 @@ func TestObjectBean(t *testing.T) {
 	})
 
 	t.Run("valid bean", func(t *testing.T) {
-		newBean(make(chan int))
-		newBean(reflect.ValueOf(func() {}))
-		newBean(&BeanZero{})
+		NewBean(make(chan int))
+		NewBean(reflect.ValueOf(func() {}))
+		NewBean(&BeanZero{})
 	})
 
 	t.Run("check name && typename", func(t *testing.T) {
@@ -186,21 +180,21 @@ func TestObjectBean(t *testing.T) {
 			name     string
 			typeName string
 		}{
-			newBean(io.Writer(os.Stdout)): {
+			NewBean(io.Writer(os.Stdout)): {
 				"File", "os/os.File",
 			},
 
-			newBean(newHistoryTeacher("")): {
+			NewBean(newHistoryTeacher("")): {
 				"historyTeacher",
 				"github.com/go-spring-projects/go-spring/gs/gs.historyTeacher",
 			},
 
-			newBean(new(pkg2.SamePkg)): {
+			NewBean(new(pkg2.SamePkg)): {
 				"SamePkg",
 				"github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
 			},
 
-			newBean(new(pkg2.SamePkg)).Name("pkg2"): {
+			NewBean(new(pkg2.SamePkg)).Name("pkg2"): {
 				"pkg2",
 				"github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
 			},
@@ -215,30 +209,30 @@ func TestObjectBean(t *testing.T) {
 
 func TestConstructorBean(t *testing.T) {
 
-	bd := newBean(NewStudent)
+	bd := NewBean(NewStudent)
 	assert.Equal(t, bd.Type().String(), "*gs.Student")
 
-	bd = newBean(NewPtrStudent)
+	bd = NewBean(NewPtrStudent)
 	assert.Equal(t, bd.Type().String(), "*gs.Student")
 
 	//mapFn := func() map[int]string { return make(map[int]string) }
-	//bd = newBean(mapFn)
+	//bd = NewBean(mapFn)
 	//assert.Equal(t, bd.Type().String(), "*map[int]string")
 
 	//sliceFn := func() []int { return make([]int, 1) }
-	//bd = newBean(sliceFn)
+	//bd = NewBean(sliceFn)
 	//assert.Equal(t, bd.Type().String(), "*[]int")
 
 	funcFn := func() func(int) { return nil }
-	bd = newBean(funcFn)
+	bd = NewBean(funcFn)
 	assert.Equal(t, bd.Type().String(), "func(int)")
 
 	interfaceFn := func(name string) Teacher { return newHistoryTeacher(name) }
-	bd = newBean(interfaceFn)
+	bd = NewBean(interfaceFn)
 	assert.Equal(t, bd.Type().String(), "gs.Teacher")
 
 	assert.Panic(t, func() {
-		_ = newBean(func() (*int, *int) { return nil, nil })
+		_ = NewBean(func() (*int, *int) { return nil, nil })
 	}, "constructor should be func\\(...\\)bean or func\\(...\\)\\(bean, error\\)")
 }
 

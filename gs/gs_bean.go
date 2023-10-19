@@ -239,10 +239,18 @@ func (d *BeanDefinition) Destroy(fn interface{}) *BeanDefinition {
 	panic(errors.New("destroy should be func(bean) or func(bean)error"))
 }
 
-// Export 设置 bean 的导出接口。
+// Export indicates the types of interface to export.
 func (d *BeanDefinition) Export(exports ...interface{}) *BeanDefinition {
 	err := d.export(exports...)
 	utils.Panic(err).When(err != nil)
+	return d
+}
+
+// Caller update bean register point on source file:line.
+func (d *BeanDefinition) Caller(skip int) *BeanDefinition {
+	if _, file, line, ok := runtime.Caller(skip); ok {
+		d.file, d.line = file, line
+	}
 	return d
 }
 
@@ -326,9 +334,8 @@ func NewBean(objOrCtor interface{}, ctorArgs ...arg.Arg) *BeanDefinition {
 		panic(errors.New("bean can't be nil"))
 	}
 
-	const skip = 2
 	var f *arg.Callable
-	_, file, line, _ := runtime.Caller(skip)
+	_, file, line, _ := runtime.Caller(1)
 
 	// 以 reflect.ValueOf(fn) 形式注册的函数被视为函数对象 bean 。
 	if !fromValue && t.Kind() == reflect.Func {
@@ -340,7 +347,7 @@ func NewBean(objOrCtor interface{}, ctorArgs ...arg.Arg) *BeanDefinition {
 		}
 
 		var err error
-		f, err = arg.Bind(objOrCtor, ctorArgs, skip)
+		f, err = arg.Bind(objOrCtor, ctorArgs, 1)
 		utils.Panic(err).When(err != nil)
 
 		out0 := t.Out(0)

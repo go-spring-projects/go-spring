@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"log/slog"
 	"reflect"
+	"runtime"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -175,12 +176,12 @@ func (c *container) Accept(b *BeanDefinition) *BeanDefinition {
 
 // Object register object bean to Ioc container.
 func (c *container) Object(i interface{}) *BeanDefinition {
-	return c.Accept(NewBean(reflect.ValueOf(i)))
+	return c.Accept(NewBean(reflect.ValueOf(i)).Caller(2))
 }
 
 // Provide register method bean to Ioc container.
 func (c *container) Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return c.Accept(NewBean(ctor, args...))
+	return c.Accept(NewBean(ctor, args...).Caller(2))
 }
 
 // AllowCircularReferences enable circular-references.
@@ -201,10 +202,13 @@ func (c *container) AllowCircularReferences() {
 // func(x *T) NewServer() *gs.BeanDefinition
 func (c *container) Configuration(i interface{}) *BeanDefinition {
 
-	bValue := reflect.ValueOf(i)
-	bType := bValue.Type()
+	parentBean, ok := i.(*BeanDefinition)
+	if !ok {
+		parentBean = NewBean(i).Caller(2)
+	}
 
-	parentBean := c.Accept(NewBean(bValue))
+	bValue := parentBean.Value()
+	bType := parentBean.Type()
 
 	for j := 0; j < bType.NumMethod(); j++ {
 		method := bType.Method(j)
@@ -215,7 +219,7 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 		var bd *BeanDefinition
 
 		switch method.Type.NumOut() {
-		case 1: // func(x *T) NewFoo() *Foo
+		case 1:
 			outType := method.Type.Out(0)
 			if !utils.IsBeanType(outType) {
 				continue
@@ -231,6 +235,12 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 				bd = c.Accept(bdInst.(*BeanDefinition))
 			} else {
 				bd = c.Provide(method.Func.Interface())
+				// fix caller information
+				if f := runtime.FuncForPC(method.Func.Pointer()); nil != f {
+					bd.file, bd.line = f.FileLine(f.Entry())
+				} else {
+					bd.file, bd.line = parentBean.file, parentBean.line
+				}
 			}
 		case 2:
 			out0Type := method.Type.Out(0)
@@ -257,16 +267,20 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 				bd = c.Accept(bdInst.(*BeanDefinition))
 			} else {
 				bd = c.Provide(method.Func.Interface())
+				// fix caller information
+				if f := runtime.FuncForPC(method.Func.Pointer()); nil != f {
+					bd.file, bd.line = f.FileLine(f.Entry())
+				} else {
+					bd.file, bd.line = parentBean.file, parentBean.line
+				}
 			}
 		}
 
-		// 修改注册行号信息为父级bean注册位置
-		bd.file, bd.line = parentBean.file, parentBean.line
-		// 依赖父级bean
+		// depends on parent bean
 		bd.DependsOn(parentBean.ID()).On(cond.OnBean(parentBean.ID()))
 	}
 
-	return parentBean
+	return c.Accept(parentBean)
 }
 
 // Dependencies return the dependency order list in either ascending or descending order.

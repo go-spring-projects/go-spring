@@ -61,17 +61,17 @@ func Accept(b *BeanDefinition) *BeanDefinition {
 
 // Object register bean to Ioc container.
 func Object(i interface{}) *BeanDefinition {
-	return bootApp.Accept(NewBean(reflect.ValueOf(i)))
+	return bootApp.Accept(NewBean(reflect.ValueOf(i)).Caller(2))
 }
 
 // Provide register bean to Ioc container.
 func Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition {
-	return bootApp.Accept(NewBean(ctor, args...))
+	return bootApp.Accept(NewBean(ctor, args...).Caller(2))
 }
 
 // Configuration scan the object `i` has `NewXXX` methods to Ioc container.
 func Configuration(i interface{}) *BeanDefinition {
-	return bootApp.Configuration(i)
+	return bootApp.Configuration(NewBean(reflect.ValueOf(i)).Caller(2))
 }
 
 // Go start a goroutine managed by the IoC container.
