@@ -2987,24 +2987,49 @@ func (tac *testAutoConfiguration) NewSubject() (*BeanDefinition, error) {
 }
 
 type testConfiguration struct {
-	Subject *testSubject `autowire:""`
+	Subject *testSubject `autowire:"?"`
 }
 
 func TestConfiguration(t *testing.T) {
-	c := New()
-	p := conf.New()
-	p.Set("prefix", "hello")
-	p.Set("open", "true")
 
-	err := c.Properties().Refresh(p)
-	assert.Nil(t, err)
+	t.Run("test Configuration without conditional", func(t *testing.T) {
+		c := New()
+		p := conf.New()
+		p.Set("prefix", "hello")
+		p.Set("open", "true")
 
-	c.Configuration(new(testAutoConfiguration))
-	bd := c.Object(new(testConfiguration))
+		err := c.Properties().Refresh(p)
+		assert.Nil(t, err)
 
-	err = c.Refresh()
-	assert.Nil(t, err)
+		c.Configuration(new(testAutoConfiguration))
+		bd := c.Object(new(testConfiguration))
 
-	subject := bd.Interface().(*testConfiguration)
-	assert.Equal(t, subject.Subject.Bar.foo.prefix, "hello")
+		err = c.Refresh()
+		assert.Nil(t, err)
+
+		subject := bd.Interface().(*testConfiguration)
+		assert.Equal(t, subject.Subject.Bar.foo.prefix, "hello")
+	})
+
+	t.Run("test Configuration with conditional", func(t *testing.T) {
+
+		c := New()
+		p := conf.New()
+		p.Set("prefix", "hello")
+		p.Set("open", "true")
+		p.Set("enable", "false")
+
+		err := c.Properties().Refresh(p)
+		assert.Nil(t, err)
+
+		c.Configuration(new(testAutoConfiguration))
+		bd := c.Object(new(testConfiguration)).On(cond.OnProperty("enable", cond.HavingValue("true")))
+
+		err = c.Refresh()
+		assert.Nil(t, err)
+
+		subject := bd.Interface().(*testConfiguration)
+		assert.Nil(t, subject.Subject)
+	})
+
 }

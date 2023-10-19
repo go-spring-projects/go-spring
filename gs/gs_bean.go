@@ -181,8 +181,13 @@ func (d *BeanDefinition) Name(name string) *BeanDefinition {
 }
 
 // On Set the condition for a bean.
-func (d *BeanDefinition) On(cond cond.Condition) *BeanDefinition {
-	d.cond = cond
+func (d *BeanDefinition) On(c cond.Condition) *BeanDefinition {
+	if nil == d.cond {
+		d.cond = c
+		return d
+	}
+
+	d.cond = cond.Group(cond.And, d.cond, c)
 	return d
 }
 

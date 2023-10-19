@@ -204,11 +204,15 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 	bValue := reflect.ValueOf(i)
 	bType := bValue.Type()
 
+	parentBean := c.Accept(NewBean(bValue))
+
 	for j := 0; j < bType.NumMethod(); j++ {
 		method := bType.Method(j)
 		if !strings.HasPrefix(method.Name, "New") {
 			continue
 		}
+
+		var bd *BeanDefinition
 
 		switch method.Type.NumOut() {
 		case 1: // func(x *T) NewFoo() *Foo
@@ -219,16 +223,15 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 
 			if outType == bdType {
 				if method.Type.NumIn() != 1 {
-					panic(fmt.Errorf("non-parameter constructor required: %s", method.Type.String()))
+					panic(fmt.Errorf("non-parameter constructor required: %s: %s", method.Name, method.Type.String()))
 				}
 
 				bdValues := method.Func.Call([]reflect.Value{bValue})
 				bdInst := bdValues[0].Interface()
-				c.Accept(bdInst.(*BeanDefinition))
+				bd = c.Accept(bdInst.(*BeanDefinition))
 			} else {
-				c.Provide(method.Func.Interface())
+				bd = c.Provide(method.Func.Interface())
 			}
-
 		case 2:
 			out0Type := method.Type.Out(0)
 			if !utils.IsBeanType(out0Type) {
@@ -237,12 +240,12 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 
 			out1Type := method.Type.Out(1)
 			if !utils.IsErrorType(out1Type) {
-				panic(fmt.Errorf("%s: second return type must be error", method.Type.String()))
+				panic(fmt.Errorf("%s: %s: second return type must be error", method.Name, method.Type.String()))
 			}
 
 			if out0Type == bdType {
 				if method.Type.NumIn() != 1 {
-					panic(fmt.Errorf("non-parameter constructor required: %s", method.Type.String()))
+					panic(fmt.Errorf("non-parameter constructor required: %s: %s", method.Name, method.Type.String()))
 				}
 
 				bdValues := method.Func.Call([]reflect.Value{bValue})
@@ -251,16 +254,19 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 				if err, ok := bdErr.(error); ok && nil != err {
 					panic(fmt.Errorf("%s: %w", method.Type.String(), err))
 				}
-				c.Accept(bdInst.(*BeanDefinition))
+				bd = c.Accept(bdInst.(*BeanDefinition))
 			} else {
-				c.Provide(method.Func.Interface())
+				bd = c.Provide(method.Func.Interface())
 			}
 		}
 
-		// ignore other methods
+		// 修改注册行号信息为父级bean注册位置
+		bd.file, bd.line = parentBean.file, parentBean.line
+		// 依赖父级bean
+		bd.On(cond.OnBean(parentBean.ID()))
 	}
 
-	return c.Accept(NewBean(bValue))
+	return parentBean
 }
 
 // Dependencies return the dependency order list in either ascending or descending order.
