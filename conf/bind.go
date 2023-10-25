@@ -97,11 +97,6 @@ func (param *BindParam) BindTag(tag string, validate reflect.StructTag) error {
 	if err != nil {
 		return err
 	}
-	if parsedTag.Key == "ROOT" {
-		parsedTag.Key = ""
-	} else if parsedTag.Key == "" {
-		parsedTag.Key = "ANONYMOUS"
-	}
 	param.Tag = parsedTag
 	if param.Key == "" {
 		param.Key = parsedTag.Key

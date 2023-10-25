@@ -124,9 +124,9 @@ func TestBindTag(t *testing.T) {
 	err = param.BindTag("${}", "")
 	assert.Nil(t, err)
 	assert.Equal(t, param, BindParam{
-		Key: "ANONYMOUS",
+		Key: "",
 		Tag: ParsedTag{
-			Key: "ANONYMOUS",
+			Key: "",
 		},
 	})
 
@@ -136,14 +136,14 @@ func TestBindTag(t *testing.T) {
 	err = param.BindTag("${}", "")
 	assert.Nil(t, err)
 	assert.Equal(t, param, BindParam{
-		Key: "s.ANONYMOUS",
+		Key: "s",
 		Tag: ParsedTag{
-			Key: "ANONYMOUS",
+			Key: "",
 		},
 	})
 
 	param = BindParam{}
-	err = param.BindTag("${ROOT}", "")
+	err = param.BindTag("${}", "")
 	assert.Nil(t, err)
 	assert.Equal(t, param, BindParam{})
 
@@ -1162,7 +1162,7 @@ func TestBind_StructFilter(t *testing.T) {
 		param := BindParam{
 			Path: v.Type().String(),
 		}
-		err := param.BindTag("${ROOT}", "")
+		err := param.BindTag("${}", "")
 		assert.Nil(t, err)
 		filter := func(i interface{}, param BindParam) (bool, error) {
 			return false, errors.New("this is an error")
@@ -1180,7 +1180,7 @@ func TestBind_StructFilter(t *testing.T) {
 		param := BindParam{
 			Path: v.Type().String(),
 		}
-		err := param.BindTag("${ROOT}", "")
+		err := param.BindTag("${}", "")
 		assert.Nil(t, err)
 		filter := func(i interface{}, param BindParam) (bool, error) {
 			reflect.ValueOf(i).Elem().SetUint(3)
@@ -1200,7 +1200,7 @@ func TestBind_StructFilter(t *testing.T) {
 		param := BindParam{
 			Path: v.Type().String(),
 		}
-		err := param.BindTag("${ROOT}", "")
+		err := param.BindTag("${}", "")
 		assert.Nil(t, err)
 		filter := func(i interface{}, param BindParam) (bool, error) {
 			return false, nil

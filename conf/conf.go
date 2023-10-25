@@ -339,7 +339,7 @@ func (p *Properties) Bind(i interface{}, args ...BindArg) error {
 	}
 
 	if len(args) == 0 {
-		args = []BindArg{tagArg{tag: "${ROOT}"}}
+		args = []BindArg{tagArg{tag: "${}"}}
 	}
 
 	t := v.Type()
