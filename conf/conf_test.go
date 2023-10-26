@@ -56,7 +56,7 @@ func TestBytes(t *testing.T) {
 }
 
 func TestProperties(t *testing.T) {
-	p := Map(map[string]interface{}{
+	p := assert.Must(Map(map[string]interface{}{
 		"int":   1,
 		"ints":  "1,2,3",
 		"uint":  "1",
@@ -65,7 +65,7 @@ func TestProperties(t *testing.T) {
 		"map": map[string]string{
 			"1": "abc",
 		},
-	})
+	}))
 	err := p.Set("", "123")
 	assert.Nil(t, err)
 	assert.Equal(t, p.Copy(), p)
@@ -86,9 +86,9 @@ func TestProperties(t *testing.T) {
 }
 
 func TestProperties_Merge(t *testing.T) {
-	p := Map(map[string]interface{}{
+	p := assert.Must(Map(map[string]interface{}{
 		"a": []int{1, 2, 3},
-	})
+	}))
 	err := p.Merge(map[string]interface{}{
 		"b": map[string]string{
 			"c": "123",

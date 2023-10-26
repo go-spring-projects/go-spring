@@ -18,6 +18,7 @@ package internal
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/go-spring-projects/go-spring/internal/utils"
 )
@@ -101,7 +102,7 @@ func (s *Storage) Keys() []string {
 }
 
 // SubKeys returns the sub keys of the key item.
-func (s *Storage) SubKeys(key string) ([]string, error) {
+func (s *Storage) SubKeys(key string, recursive bool) ([]string, error) {
 	path, err := SplitPath(key)
 	if err != nil {
 		return nil, err
@@ -120,6 +121,12 @@ func (s *Storage) SubKeys(key string) ([]string, error) {
 			tree = v
 		}
 	}
+
+	if recursive {
+		keys := recursiveSubKeys(tree)
+		return keys, nil
+	}
+
 	m := tree.data.(map[string]*treeNode)
 	keys := utils.SortedKeys(m)
 	return keys, nil
@@ -249,4 +256,28 @@ func (s *Storage) merge(key, val string) (*treeNode, error) {
 		}
 	}
 	return tree, nil
+}
+
+func recursiveSubKeys(tree *treeNode) (keys []string) {
+	if nodeTypeNil == tree.node || nil == tree.data {
+		return nil
+	}
+
+	m := tree.data.(map[string]*treeNode)
+	keys = make([]string, 0, len(m))
+
+	for key, node := range m {
+		switch node.node {
+		case nodeTypeValue:
+			keys = append(keys, key)
+		case nodeTypeArray, nodeTypeMap:
+			getSubKeys := recursiveSubKeys(node)
+			for _, skey := range getSubKeys {
+				keys = append(keys, key+"."+skey)
+			}
+		}
+	}
+
+	sort.Strings(keys)
+	return keys
 }

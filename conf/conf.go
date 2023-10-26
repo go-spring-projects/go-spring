@@ -130,10 +130,9 @@ func New() *Properties {
 }
 
 // Map creates *Properties from map.
-func Map(m map[string]interface{}) *Properties {
+func Map(m map[string]interface{}) (*Properties, error) {
 	p := New()
-	_ = p.Merge(m)
-	return p
+	return p, p.Merge(m)
 }
 
 // Load creates *Properties from file.

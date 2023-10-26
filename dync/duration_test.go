@@ -38,7 +38,7 @@ func TestDuration(t *testing.T) {
 		},
 	}
 
-	p := conf.Map(nil)
+	p := assert.Must(conf.Map(nil))
 	err := d.OnRefresh(p, param)
 	assert.Error(t, err, "bind Duration error: property \"d\": not exist")
 

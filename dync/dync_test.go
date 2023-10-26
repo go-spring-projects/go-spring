@@ -33,7 +33,7 @@ func TestProperties(t *testing.T) {
 			"c": []int{1, 2, 3},
 		},
 	}
-	err := p.Refresh(conf.Map(m))
+	err := p.Refresh(assert.Must(conf.Map(m)))
 	assert.Nil(t, err)
 	assert.Equal(t, p.Keys(), []string{"a", "b.c[0]", "b.c[1]", "b.c[2]"})
 	assert.False(t, p.Has("c"))
@@ -78,17 +78,17 @@ func TestDynamic(t *testing.T) {
 		b, _ := json.Marshal(cfg)
 		assert.Equal(t, string(b), `{"Int":3,"Float":1.2,"Map":{},"Slice":[]}`)
 
-		err = p.Refresh(conf.Map(map[string]interface{}{
+		err = p.Refresh(assert.Must(conf.Map(map[string]interface{}{
 			"int":   1,
 			"float": 5.4,
-		}))
+		})))
 		assert.Nil(t, err)
 		b, _ = json.Marshal(cfg)
 		assert.Equal(t, string(b), `{"Int":1,"Float":5.4,"Map":{},"Slice":[]}`)
 
-		err = p.Refresh(conf.Map(map[string]interface{}{
+		err = p.Refresh(assert.Must(conf.Map(map[string]interface{}{
 			"int": 2,
-		}))
+		})))
 		assert.Nil(t, err)
 		b, _ = json.Marshal(cfg)
 		assert.Equal(t, string(b), `{"Int":2,"Float":1.2,"Map":{},"Slice":[]}`)
@@ -96,21 +96,21 @@ func TestDynamic(t *testing.T) {
 
 	t.Run("validate error", func(t *testing.T) {
 		p, _, _ := newTest()
-		err := p.Refresh(conf.Map(map[string]interface{}{
+		err := p.Refresh(assert.Must(conf.Map(map[string]interface{}{
 			"int": 9,
-		}))
+		})))
 		assert.Error(t, err, "validate failed on \"\\$<6\" for value 9")
-		err = p.Refresh(conf.Map(map[string]interface{}{
+		err = p.Refresh(assert.Must(conf.Map(map[string]interface{}{
 			"int": "abc.123",
-		}))
+		})))
 		assert.Error(t, err, "parsing \\\"abc.123\\\": invalid syntax")
 	})
 
 	t.Run("bind value error", func(t *testing.T) {
 		p := New()
-		err := p.Refresh(conf.Map(map[string]interface{}{
+		err := p.Refresh(assert.Must(conf.Map(map[string]interface{}{
 			"int": "abc.123",
-		}))
+		})))
 		assert.Nil(t, err)
 
 		cfg := new(Config)
@@ -124,9 +124,9 @@ func TestDynamic(t *testing.T) {
 		err = p.BindValue(reflect.ValueOf(new(Int64)), param)
 		assert.Error(t, err, "parsing \\\"abc.123\\\": invalid syntax")
 
-		err = p.Refresh(conf.Map(map[string]interface{}{
+		err = p.Refresh(assert.Must(conf.Map(map[string]interface{}{
 			"int": 123,
-		}))
+		})))
 		assert.Nil(t, err)
 		err = p.BindValue(reflect.ValueOf(new(Int64)), param)
 		assert.Nil(t, err)

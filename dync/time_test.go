@@ -38,7 +38,7 @@ func TestTime(t *testing.T) {
 		},
 	}
 
-	p := conf.Map(nil)
+	p := assert.Must(conf.Map(nil))
 	err := tm.OnRefresh(p, param)
 	assert.Error(t, err, "bind Time error: property \"time\": not exist")
 

@@ -100,6 +100,14 @@ func Equal(t T, got interface{}, expect interface{}, msg ...string) {
 	}
 }
 
+// Must assertion failed when got err
+func Must[T any](value T, err error) T {
+	if nil != err {
+		panic(err)
+	}
+	return value
+}
+
 // NotEqual assertion failed when got and expect are `deeply equal`.
 func NotEqual(t T, got interface{}, expect interface{}, msg ...string) {
 	t.Helper()

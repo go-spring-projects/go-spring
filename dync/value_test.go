@@ -38,7 +38,7 @@ func TestValue_Uint32(t *testing.T) {
 		},
 	}
 
-	p := conf.Map(nil)
+	p := assert.Must(conf.Map(nil))
 	err := r.OnRefresh(p, param)
 	assert.Error(t, err, "bind uint32 error: property \"uint\": not exist")
 	assert.Equal(t, r.Value(), (*uint32)(nil))
@@ -76,7 +76,7 @@ func TestValue_Duration(t *testing.T) {
 		},
 	}
 
-	p := conf.Map(nil)
+	p := assert.Must(conf.Map(nil))
 	err := r.OnRefresh(p, param)
 	assert.Error(t, err, "bind Duration error: property \"d\": not exist")
 	assert.Equal(t, r.Value(), (*time.Duration)(nil))
@@ -105,7 +105,7 @@ func TestValue_Time(t *testing.T) {
 		},
 	}
 
-	p := conf.Map(nil)
+	p := assert.Must(conf.Map(nil))
 	err := r.OnRefresh(p, param)
 	assert.Error(t, err, "bind Time error: property \"time\": not exist")
 	assert.Equal(t, r.Value(), (*time.Time)(nil))

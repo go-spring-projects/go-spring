@@ -316,7 +316,7 @@ func bindMap(p *Properties, v reflect.Value, t reflect.Type, param BindParam, fi
 	et := t.Elem()
 	ret := reflect.MakeMap(t)
 
-	keys, err := p.storage.SubKeys(param.Key)
+	keys, err := p.storage.SubKeys(param.Key, utils.IsPrimitiveValueType(et))
 	if err != nil {
 		return fmt.Errorf("bind %s error: %w", param.Path, err)
 	}

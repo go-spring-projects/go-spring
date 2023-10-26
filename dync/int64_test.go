@@ -37,7 +37,7 @@ func TestInt64(t *testing.T) {
 		},
 	}
 
-	p := conf.Map(nil)
+	p := assert.Must(conf.Map(nil))
 	err := u.OnRefresh(p, param)
 	assert.Error(t, err, "bind int64 error: property \"int\": not exist")
 

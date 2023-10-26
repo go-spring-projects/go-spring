@@ -29,13 +29,13 @@ func TestStorage(t *testing.T) {
 		assert.Nil(t, s.Data())
 		assert.Nil(t, s.Keys())
 
-		subKeys, err := s.SubKeys("m")
+		subKeys, err := s.SubKeys("m", false)
 		assert.Nil(t, err)
 		assert.Nil(t, subKeys)
 
 		assert.False(t, s.Has("m[b]"))
 
-		subKeys, err = s.SubKeys("m[b]")
+		subKeys, err = s.SubKeys("m[b]", false)
 		assert.Error(t, err, "invalid key 'm\\[b]'")
 
 		err = s.Set("m[b]", "123")
@@ -80,7 +80,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 'a' is a value but 'a\\.y' wants other type")
 		assert.Equal(t, s.Keys(), []string{"a"})
 
-		_, err = s.SubKeys("a")
+		_, err = s.SubKeys("a", false)
 		assert.Error(t, err, "property 'a' is value")
 
 		err = s.Set("a", "c")
@@ -125,7 +125,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 'm' is a map but 'm\\[0]' wants other type")
 		assert.Equal(t, s.Keys(), []string{"m.x"})
 
-		subKeys, err := s.SubKeys("m")
+		subKeys, err := s.SubKeys("m", false)
 		assert.Nil(t, err)
 		assert.Equal(t, subKeys, []string{"x"})
 
@@ -142,7 +142,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 'm' is a map but 'm\\[0]' wants other type")
 		assert.Equal(t, s.Keys(), []string{"m.x"})
 
-		subKeys, err = s.SubKeys("m")
+		subKeys, err = s.SubKeys("m", false)
 		assert.Nil(t, err)
 		assert.Equal(t, subKeys, []string{"x"})
 
@@ -161,7 +161,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 'm.t' is a value but 'm.t\\[0]' wants other type")
 		assert.Equal(t, s.Keys(), []string{"m.t", "m.x"})
 
-		subKeys, err = s.SubKeys("m")
+		subKeys, err = s.SubKeys("m", false)
 		assert.Nil(t, err)
 		assert.Equal(t, subKeys, []string{"t", "x"})
 
@@ -189,7 +189,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 's' is an array but 's\\.x' wants other type")
 		assert.Equal(t, s.Keys(), []string{"s[0]"})
 
-		subKeys, err := s.SubKeys("s")
+		subKeys, err := s.SubKeys("s", false)
 		assert.Nil(t, err)
 		assert.Equal(t, subKeys, []string{"0"})
 
@@ -206,7 +206,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 's' is an array but 's\\.x' wants other type")
 		assert.Equal(t, s.Keys(), []string{"s[0]"})
 
-		subKeys, err = s.SubKeys("s")
+		subKeys, err = s.SubKeys("s", false)
 		assert.Nil(t, err)
 		assert.Equal(t, subKeys, []string{"0"})
 
@@ -223,7 +223,7 @@ func TestStorage(t *testing.T) {
 		assert.Error(t, err, "property 's' is an array but 's\\.x' wants other type")
 		assert.Equal(t, s.Keys(), []string{"s[0]", "s[1]"})
 
-		subKeys, err = s.SubKeys("s")
+		subKeys, err = s.SubKeys("s", false)
 		assert.Nil(t, err)
 		assert.Equal(t, subKeys, []string{"0", "1"})
 
