@@ -15,26 +15,26 @@
 
 <img align="right" width="159px" src="logo.svg"/>
 
-`Go-Spring` vision is to empower Go programmers with a powerful programming framework similar to Java `Spring`. It is dedicated to providing users with a simple, secure, and reliable programming experience.
+`Go-Spring`的愿景是为Go程序员提供类似于Java `Spring`的强大编程框架。致力于为用户提供简单、安全、可靠的编程体验。
 
-This project initial code based from [go-spring/go-spring](https://github.com/go-spring/go-spring) created by [lvan100](https://github.com/lvan100)
+本项目初始代码基于 [go-spring/go-spring](https://github.com/go-spring/go-spring) 由 [lvan100](https://github.com/lvan100) 创建。
 
-English | [中文](README_CN.md)  
+[English](README.md) | 中文  
 
-### Install
+### 安装
 `go get github.com/go-spring-projects/go-spring@latest`
 
-### Features
-* **IoC Container**: Implements an inversion of control (IoC) container based on reflection, supporting the injection of structs, functions, and constants. This means you can use the `autowired` tag to automatically inject dependencies without having to manage them manually.
-* **Flexible Configuration Management**: Taking inspiration from Spring's @Value annotation, Go-Spring allows you to fetch configuration items from multiple sources (such as environment variables, files, command-line arguments, etc.). This brings unprecedented flexibility in configuration management.
-* **Validator Extension for Configuration**: Extends its robust configuration management capabilities with support for custom validator extensions. This enables you to perform validity checks on properties, ensuring only valid configurations are applied to your application.
-* **Logger Based on Standard slog**: Provides built-in logger support using the standard library slog for effective and streamlined logging. This enhancement offers clear, concise, and well-structured logging information that aids in system debugging and performance monitoring.
-* **Dynamic Property Refreshing**: Provides dynamic property refreshing which lets you update the application properties on-the-fly without needing to reboot your application. It caters to the needs of applications that require high availability and real-time responsiveness.
-* **Dependency Ordered Application Events**: Ensures the correct notification of initialization and destruction events according to the lifecycle of objects, following the order of bean dependencies. This enhances the robustness and reliability of the system during its lifecycle operations.
+### 主要特性
+* **IoC容器**: 实现了基于反射的控制反转(IoC)容器，支持结构体、函数和常量的注入。这意味着你可以使用' autowired '标签来自动注入依赖，而不必手动管理它们。
+* **配置管理**: 受Spring的@Value注释的启发，Go-Spring允许您从多个源(如环境变量、文件、命令行参数等)获取配置项。这为配置管理带来了前所未有的灵活性。
+* **配置验证器**: 通过支持自定义验证器扩展扩展了其健壮的配置管理功能。这使您能够对属性执行有效性检查，确保仅将有效的配置应用于您的应用程序。
+* **结构化日志**: 使用标准库slog提供内置日志记录器支持，以实现有效和简化的日志记录。这种增强提供了清晰、简洁和结构良好的日志信息，有助于系统调试和性能监视。
+* **动态属性**: 提供动态属性刷新功能，让您无需重新启动应用程序即可动态更新应用程序属性。它满足了需要高可用性和实时响应的应用程序的需求。
+* **依赖序事件**: 按照bean依赖关系的顺序，确保根据对象的生命周期正确通知初始化和销毁事件。这增强了系统在其生命周期运行中的鲁棒性和可靠性。
 
-### IoC container
+### IoC 容器
 
-In addition to implementing a powerful IoC container similar to Java Spring, Go-Spring also extends the concept of beans. In Go, objects (pointers), arrays, maps, and function pointers can all be considered beans and can be placed in the IoC container.
+除了实现类似于Java Spring的强大的IoC容器之外，Go-Spring还扩展了bean的概念。在Go中，对象(指针)、数组、Map和函数指针都可以被视为bean，并且可以放置在IoC容器中。
 
 | Java Spring 				                      | Go-Spring			                   |
 |:--------------------------------------|:-------------------------------|
@@ -56,9 +56,9 @@ In addition to implementing a powerful IoC container similar to Java Spring, Go-
 | `@ConditionalOnMissingClass` 			      | Don't Need 					               |
 | `@Lookup` 							                     | —— 							                     |
 
-### How to use
+### 如何使用
 
-> Golang does not support annotations, bean registration needs to be written code. And due to the package trimming, you must import the package to ensure that the registration code is executed correctly.
+> Golang不支持注解，需要编写bean注册代码。由于包裁剪，您必须导入包以确保正确执行注册码。
 
 #### Hello world
 
@@ -114,25 +114,25 @@ func init() {
 }
 ```
 
-#### Annotations syntax
+#### 注解语法
 
-Property binding and bean injection annotations are marked using struct field tags.
+属性绑定和bean注入注释使用结构标签记进行标记。
 
-##### Property binding
+##### 属性绑定
 
-Bind properties to a value, the bind value can be primitive type, map, slice, struct. When binding to struct, the tag 'value' indicates which properties should be bind. The 'value' tags are defined by value:"${a:=b}", 'a' is the property name, 'b' is the default value.
+将属性绑定到一个值，绑定的值可以是基础类型、Map、切片、结构体。当绑定到struct时，标签`value`指示应该绑定哪些属性。`value`标签由`value:"${a:=b}"`定义，`a`是属性名，`b`是默认值。
 
 ![binding](binding.svg)
 
-##### Dependency Injection
+##### 依赖注入
 
-Dependency Injection is a design pattern used to implement decoupling between classes and the management of dependencies. It transfers the responsibility of creating and maintaining dependencies to an external container, so that the class does not need to instantiate dependent objects itself. Instead, the external container dynamically injects the dependencies.
+依赖注入是一种设计模式，用于实现类之间的解耦和依赖项的管理。它将创建和维护依赖关系的责任转移到外部容器，这样类就不需要实例化依赖对象本身。相反，外部容器会动态注入依赖项。
 
 ![autowire](autowire.svg)
 
-### Conditional registering
+### 条件注册
 
-According to the conditions specified at registration, you can control whether the Bean is effective.
+根据注册时指定的条件，您可以控制Bean是否有效。
 
 ```
 func OnBean(selector BeanSelector) 
@@ -145,20 +145,19 @@ func OnProperty(name string, options ...PropertyOption)
 func OnSingleBean(selector BeanSelector) 
 ```
 
-### Property source
+### 属性数据源
 
-`Go-Spring` not only supports property binding for primitive data types but also supports property binding for custom value types. It also provides support for nested binding of struct properties.
+`Go-Spring`不仅支持基本数据类型的属性绑定，还支持自定义值类型的属性绑定。它还支持结构属性的嵌套绑定。
 
-Built-in configuration data source support based on the local file system, and built up the support of the data format of `.yaml` `.properties` `.toml`.
+内置配置数据源支持基于本地文件系统，并建立了`.yaml` `.properties` `.toml`的数据格式的支持。
 
-The default we will try to load all the supported file formats from `./config/`, load according to the following priority levels:
-1. Load `./config/application.{yaml|properties|toml}`.
-2. Load `./config/application-{profiles}.{yaml|properties|toml}`.
-3. Load environment variables starting with `GS_`.
-4. Load command line args of `-D key=value`.
+默认情况下，我们将尝试从`./config/`加载所有支持的文件格式, 根据以下优先级级别加载:
+1. 加载 `./config/application.{yaml|properties|toml}`。
+2. 加载 `./config/application-{profiles}.{yaml|properties|toml}`。
+3. 加载前缀为`GS_`的环境变量。
+4. 加载命令行参数 `-D key=value`。
 
-The earlier the configuration is loaded, the lower the priority, which means that it may be overwritten by subsequent configurations with higher priorities.
-
+配置加载得越早，优先级越低，这意味着它可能会被具有更高优先级的后续配置覆盖。
 
 ```go
 type DBOptions struct {
@@ -174,7 +173,7 @@ type DbConfig struct {
 }
 ```
 
-The above code can be bound using the following configuration：
+可以使用以下配置绑定上述代码：
 
 ```yaml
 db:
@@ -192,11 +191,11 @@ db:
     db: db2
 ```
 
-### Property validator
+### 属性校验器
 
-`Go-Spring` allows you to register a custom value validator. If the value verification fails, the `Go-Spring` will give an error in the startup stage.
+`Go-Spring`允许您注册自定义值验证器。如果值验证失败，则`Go-Spring`将在启动阶段报告一个错误。
 
-In this example, we will use [go-validator/validator](https://github.com/go-validator/validator), you can refer to this example to register your custom validator.
+在这例子中, 我们将使用 [go-validator/validator](https://github.com/go-validator/validator), 您可以参考这个示例来注册您的自定义验证器。
 
 ```go
 package main
@@ -270,9 +269,9 @@ func main() {
 // ↳bind MysqlDatabase.Options error: validate MysqlDatabase.Options.Port error: less than min
 ```
 
-### Dynamic property
+### 动态刷新属性
 
-Allows dynamically refresh properties during runtime, not only supporting basic data types, but also structures, slices, and Map types.
+允许在运行时动态刷新属性，不仅支持基本数据类型，还支持结构、切片和映射类型。
 
 ```go
 package main
@@ -355,9 +354,9 @@ func main() {
 // server running
 ```
 
-### Structured logger
+### 结构化日志
 
-Automatically injects named logger, the logger library powered by the std [slog](https://pkg.go.dev/log/slog).
+自动注入具名的日志实例，该日志库由标准库提供支持 [slog](https://pkg.go.dev/log/slog)。
 
 ```go
 package main
@@ -483,17 +482,17 @@ func main() {
 // {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello trace logger","logger":"trace","type":"main.App"}
 ```
 
-### Dependent order event
+### 依赖序事件
 
-Initialization and deinitialization based on dependency order, everything will be executed as expected.
+基于依赖性顺序的初始化和去启动化，一切都将按预期执行。
 
 ![order](event.svg)
 
-### Project layout
+### 项目布局
 
-This is the recommended basic layout for a `Go-Spring` application project, As your project grows keep in mind that it'll be important to make sure your code is well structured otherwise you'll end up with a messy code with lots of hidden dependencies and global state.
+这是Go-Spring应用程序项目推荐的基本布局。随着项目的发展，请记住，确保代码结构良好是很重要的，否则你最终会得到一个带有许多隐藏依赖关系和全局状态的混乱代码。
 
-> If you are trying to learn Go or if you are building a simple project for yourself this project layout is an overkill.
+> 如果你正在尝试学习Go，或者你正在为自己构建一个简单的项目，这个项目布局是多余的。
 
 ```
 |-- cmd                             # main applications for this project.
@@ -517,7 +516,7 @@ This is the recommended basic layout for a `Go-Spring` application project, As y
 `-- Makefile                        # Makefile.
 ```
 
-This is a recommended code of `main.go`.
+这是`main.go`的建议实现代码，您可以在此基础上进行修改。
 
 ```go
 package main
