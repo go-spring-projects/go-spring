@@ -227,11 +227,16 @@ func bindSlice(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 	}
 
 	for i := 0; ; i++ {
-		e := reflect.New(et).Elem()
 		subParam := BindParam{
 			Key:  fmt.Sprintf("%s[%d]", param.Key, i),
 			Path: fmt.Sprintf("%s[%d]", param.Path, i),
 		}
+
+		if !p.Has(subParam.Key) {
+			break
+		}
+
+		e := reflect.New(et).Elem()
 		err = BindValue(p, e, et, subParam, filter)
 		if errors.Is(err, errNotExist) {
 			break

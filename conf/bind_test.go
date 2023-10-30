@@ -779,6 +779,41 @@ func TestBind_SliceValue(t *testing.T) {
 			},
 		})
 	})
+
+	t.Run("structs#2", func(t *testing.T) {
+		type AppSecret struct {
+			AppId  string `value:"${appid:=}"`
+			AppUrl string `value:"${appurl:=}"`
+			AppKey string `value:"${appkey:=}"`
+		}
+
+		type BaseChannel struct {
+			Extends []AppSecret `value:"${extends:=}"`
+		}
+
+		type UserPwd struct {
+			BaseChannel `value:"${sdk.userpwd}"`
+		}
+
+		var channel UserPwd
+		err := assert.Must(Map(map[string]interface{}{
+			"sdk.userpwd.extends[0].appid":  "app1",
+			"sdk.userpwd.extends[0].appurl": "//app1",
+			"sdk.userpwd.extends[0].appkey": "app1key",
+			"sdk.userpwd.extends[1].appid":  "app2",
+			"sdk.userpwd.extends[1].appurl": "//app2",
+			"sdk.userpwd.extends[1].appkey": "app2key",
+		})).Bind(&channel, Tag("${}"))
+		assert.Nil(t, err)
+		assert.Equal(t, channel, UserPwd{
+			BaseChannel{
+				Extends: []AppSecret{
+					{AppId: "app1", AppUrl: "//app1", AppKey: "app1key"},
+					{AppId: "app2", AppUrl: "//app2", AppKey: "app2key"},
+				},
+			},
+		})
+	})
 }
 
 func TestBind_MapValue(t *testing.T) {
