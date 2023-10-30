@@ -3038,3 +3038,48 @@ func TestConfiguration(t *testing.T) {
 	})
 
 }
+
+func TestContextGetWire(t *testing.T) {
+
+	type GetObject struct {
+		Name string `value:"${app.name}"`
+	}
+
+	type ContextAware struct {
+		Ctx Context `autowire:""`
+	}
+
+	var appCtx Context
+
+	c := New()
+	c.Properties().Set("app.name", "testapp")
+	c.Object(new(ContextAware))
+	getbd := c.Provide(func(ctx Context) *GetObject {
+		appCtx = ctx
+		return &GetObject{}
+	})
+
+	err := c.Refresh()
+	assert.Nil(t, err)
+
+	t.Run("Context#Get", func(t *testing.T) {
+		var getObj *GetObject
+		err := appCtx.Get(&getObj)
+		assert.Nil(t, err)
+		assert.Equal(t, getObj, getbd.Interface())
+		assert.Equal(t, getObj.Name, "testapp")
+	})
+
+	t.Run("Context#Wire", func(t *testing.T) {
+
+		type WireObject struct {
+			Get *GetObject `autowire:""`
+		}
+
+		wireObj, err := appCtx.Wire(new(WireObject))
+		assert.Nil(t, err)
+		assert.Equal(t, wireObj.(*WireObject).Get, getbd.Interface())
+		assert.Equal(t, wireObj.(*WireObject).Get.Name, "testapp")
+	})
+
+}
