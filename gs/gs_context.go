@@ -73,6 +73,10 @@ func (c *container) Get(i interface{}, selectors ...BeanSelector) error {
 		return errors.New("i can't be nil")
 	}
 
+	if nil == c.tempContainer {
+		return errors.New("Ioc container is auto cleared, if you want use Get/Wire please use autowire tag to inject `gs.Context` ")
+	}
+
 	v := reflect.ValueOf(i)
 	if v.Kind() != reflect.Ptr {
 		return errors.New("i must be pointer")
@@ -99,6 +103,15 @@ func (c *container) Get(i interface{}, selectors ...BeanSelector) error {
 // If the input is a constructor, it immediately executes that constructor and then performs property binding and dependency injection on the returned result.
 // In both cases, the function returns the actual value of the bean object after its execution is complete.
 func (c *container) Wire(objOrCtor interface{}, ctorArgs ...arg.Arg) (interface{}, error) {
+
+	if objOrCtor == nil {
+		return nil, errors.New("objOrCtor can't be nil")
+	}
+
+	if nil == c.tempContainer {
+		return nil, errors.New("Ioc container is auto cleared, if you want use Get/Wire please use autowire tag to inject `gs.Context` ")
+	}
+
 	b := NewBean(objOrCtor, ctorArgs...)
 	stack := newWiringStack(c.logger)
 	if err := c.wireBean(b, stack); nil != err || len(stack.beans) > 0 {

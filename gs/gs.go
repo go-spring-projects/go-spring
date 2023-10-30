@@ -79,11 +79,6 @@ type Context interface {
 	Go(fn func(ctx context.Context))
 }
 
-// ContextAware injects the Context into a struct as the field GSContext.
-type ContextAware struct {
-	GSContext Context `autowire:""`
-}
-
 type tempContainer struct {
 	props           *conf.Properties
 	beans           []*BeanDefinition
