@@ -83,7 +83,7 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 		return err
 	}
 
-	if err := app.container.refresh(false); err != nil {
+	if err := app.container.refresh(true); err != nil {
 		return err
 	}
 
@@ -93,7 +93,6 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 
 	app.onAppStart(app.container)
 
-	app.container.clear()
 	logger.Info("application started successfully")
 
 	// Responding to the Ctrl+C and kill commands in the console.

@@ -2879,6 +2879,11 @@ func TestDestroyDependence(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+// ContextAware injects the Context into a struct as the field GSContext.
+type ContextAware struct {
+	GSContext Context `autowire:""`
+}
+
 type TContextAware struct {
 	ContextAware
 }
