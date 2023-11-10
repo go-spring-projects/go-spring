@@ -29,17 +29,11 @@ import (
 
 	"github.com/go-spring-projects/go-spring/conf"
 	"github.com/go-spring-projects/go-spring/gs/arg"
-	"github.com/go-spring-projects/go-spring/internal/utils"
 )
-
-// AppRunner .
-type AppRunner interface {
-	Run(ctx Context)
-}
 
 // AppEvent start and stop events
 type AppEvent interface {
-	OnAppStart(ctx Context)
+	OnAppStart(ctx context.Context)
 	OnAppStop(ctx context.Context)
 }
 
@@ -87,9 +81,7 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 		return err
 	}
 
-	var logger = GetLogger("", utils.TypeName(app))
-
-	app.onAppRun(app.container)
+	var logger = GetLogger()
 
 	app.onAppStart(app.container)
 
@@ -105,7 +97,7 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 
 	<-app.exitChan
 
-	app.onAppStop(context.Background())
+	app.onAppStop(app.container)
 
 	app.container.Close()
 
@@ -114,32 +106,24 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 	return nil
 }
 
-func (app *App) onAppRun(ctx Context) {
-	for _, bean := range app.container.Dependencies(true) {
-		x := bean.Value().Interface()
-
-		if ar, ok := x.(AppRunner); ok {
-			ar.Run(ctx)
-		}
-	}
-}
-
 func (app *App) onAppStart(ctx Context) {
+	gsCtx := WithContext(ctx.Context(), ctx)
 	for _, bean := range app.container.Dependencies(true) {
 		x := bean.Value().Interface()
 
 		if ae, ok := x.(AppEvent); ok {
-			ae.OnAppStart(ctx)
+			ae.OnAppStart(gsCtx)
 		}
 	}
 }
 
-func (app *App) onAppStop(ctx context.Context) {
+func (app *App) onAppStop(ctx Context) {
+	gsCtx := WithContext(context.Background(), ctx)
 	for _, bean := range app.container.Dependencies(false) {
 		x := bean.Value().Interface()
 
 		if ae, ok := x.(AppEvent); ok {
-			ae.OnAppStop(ctx)
+			ae.OnAppStop(gsCtx)
 		}
 	}
 }
@@ -184,7 +168,7 @@ func (app *App) Shutdown(msg ...string) {
 	case <-app.exitChan:
 		// app already closed
 	default:
-		var logger = GetLogger("", utils.TypeName(app))
+		var logger = GetLogger()
 		logger.Info(fmt.Sprintf("program will exit %s", strings.Join(msg, ", ")))
 		close(app.exitChan)
 	}

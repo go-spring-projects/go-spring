@@ -564,3 +564,11 @@ func TestIsBeanReceiver(t *testing.T) {
 	assert.False(t, IsBeanReceiver(reflect.TypeOf(map[string]*string{})))
 	assert.True(t, IsBeanReceiver(reflect.TypeOf(map[string]fmt.Stringer{})))
 }
+
+func TestStripTypeNameFromFile(t *testing.T) {
+	assert.Equal(t, StripTypeName("test.go"), "test.go")
+	assert.Equal(t, StripTypeName("xx_test.go"), "xx_test.go")
+	assert.Equal(t, StripTypeName("bar/test.go"), "bar/test.go")
+	assert.Equal(t, StripTypeName("foo/bar/test.go"), "bar/test.go")
+	assert.Equal(t, StripTypeName("github.com/foo/bar/test.go"), "bar/test.go")
+}

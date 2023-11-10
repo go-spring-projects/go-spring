@@ -16,7 +16,9 @@
 
 package gs
 
-import "github.com/go-spring-projects/go-spring/internal/log"
+import (
+	"github.com/go-spring-projects/go-spring/internal/log"
+)
 
 type Logger = log.Logger
 
@@ -24,6 +26,22 @@ func SetLogger(loggerName string, logger *Logger, primary ...bool) {
 	log.SetLogger(loggerName, logger, primary...)
 }
 
-func GetLogger(loggerName string, typeName string) *Logger {
-	return log.GetLogger(loggerName, typeName)
+func GetLogger(getOptions ...GetLogOption) *Logger {
+	options := &logOptions{}
+	for _, fn := range getOptions {
+		fn(options)
+	}
+	return log.GetLogger(options.loggerName)
+}
+
+type GetLogOption func(*logOptions)
+
+type logOptions struct {
+	loggerName string
+}
+
+func WithLogName(name string) GetLogOption {
+	return func(options *logOptions) {
+		options.loggerName = name
+	}
 }
