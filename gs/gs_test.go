@@ -18,6 +18,7 @@ package gs
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"image"
@@ -926,6 +927,8 @@ type destroyable interface {
 	Init()
 	Destroy()
 	InitWithError() error
+	InitWithCtx(ctx context.Context)
+	InitWithCtxError(ctx context.Context) error
 	DestroyWithError() error
 }
 
@@ -951,6 +954,27 @@ func (d *callDestroy) InitWithError() error {
 	return fmt.Errorf("error")
 }
 
+func (d *callDestroy) InitWithCtx(ctx context.Context) {
+	if d.i == 0 {
+		d.inited = true
+	}
+	if nil == FromContext(ctx) {
+		panic("invalid context")
+	}
+}
+
+func (d *callDestroy) InitWithCtxError(ctx context.Context) error {
+	if d.i == 0 {
+		d.inited = true
+
+		if nil == FromContext(ctx) {
+			return fmt.Errorf("invalid context")
+		}
+		return nil
+	}
+	return fmt.Errorf("error")
+}
+
 func (d *callDestroy) DestroyWithError() error {
 	if d.i == 0 {
 		d.destroyed = true
@@ -971,15 +995,29 @@ func TestRegisterBean_InitFunc(t *testing.T) {
 
 	t.Run("call init", func(t *testing.T) {
 
-		c := New()
-		c.Object(new(callDestroy)).Init((*callDestroy).Init)
-		err := runTest(c, func(p Context) {
-			var d *callDestroy
-			err := p.Get(&d)
+		{
+			c := New()
+			c.Object(new(callDestroy)).Init((*callDestroy).Init)
+			err := runTest(c, func(p Context) {
+				var d *callDestroy
+				err := p.Get(&d)
+				assert.Nil(t, err)
+				assert.True(t, d.inited)
+			})
 			assert.Nil(t, err)
-			assert.True(t, d.inited)
-		})
-		assert.Nil(t, err)
+		}
+
+		{
+			c := New()
+			c.Object(new(callDestroy)).Init((*callDestroy).InitWithCtx)
+			err := runTest(c, func(p Context) {
+				var d *callDestroy
+				err := p.Get(&d)
+				assert.Nil(t, err)
+				assert.True(t, d.inited)
+			})
+			assert.Nil(t, err)
+		}
 	})
 
 	t.Run("call init with error", func(t *testing.T) {
@@ -991,32 +1029,72 @@ func TestRegisterBean_InitFunc(t *testing.T) {
 			assert.Error(t, err, "error")
 		}
 
-		c := New()
-		p := conf.New()
-		p.Set("int", 0)
-		c.Object(&callDestroy{}).Init((*callDestroy).InitWithError)
+		{
+			c := New()
+			c.Object(&callDestroy{i: 1}).Init((*callDestroy).InitWithCtxError)
+			err := c.Refresh()
+			assert.Error(t, err, "error")
+		}
 
-		err := c.Properties().Refresh(p)
-		assert.Nil(t, err)
-		err = runTest(c, func(p Context) {
-			var d *callDestroy
-			err = p.Get(&d)
+		{
+			c := New()
+			p := conf.New()
+			p.Set("int", 0)
+			c.Object(&callDestroy{}).Init((*callDestroy).InitWithError)
+
+			err := c.Properties().Refresh(p)
 			assert.Nil(t, err)
-			assert.True(t, d.inited)
-		})
-		assert.Nil(t, err)
+			err = runTest(c, func(p Context) {
+				var d *callDestroy
+				err = p.Get(&d)
+				assert.Nil(t, err)
+				assert.True(t, d.inited)
+			})
+			assert.Nil(t, err)
+		}
+
+		{
+			c := New()
+			p := conf.New()
+			p.Set("int", 0)
+			c.Object(&callDestroy{}).Init((*callDestroy).InitWithCtxError)
+
+			err := c.Properties().Refresh(p)
+			assert.Nil(t, err)
+			err = runTest(c, func(p Context) {
+				var d *callDestroy
+				err = p.Get(&d)
+				assert.Nil(t, err)
+				assert.True(t, d.inited)
+			})
+			assert.Nil(t, err)
+		}
 	})
 
 	t.Run("call interface init", func(t *testing.T) {
-		c := New()
-		c.Provide(func() destroyable { return new(callDestroy) }).Init(destroyable.Init)
-		err := runTest(c, func(p Context) {
-			var d destroyable
-			err := p.Get(&d)
+		{
+			c := New()
+			c.Provide(func() destroyable { return new(callDestroy) }).Init(destroyable.Init)
+			err := runTest(c, func(p Context) {
+				var d destroyable
+				err := p.Get(&d)
+				assert.Nil(t, err)
+				assert.True(t, d.(*callDestroy).inited)
+			})
 			assert.Nil(t, err)
-			assert.True(t, d.(*callDestroy).inited)
-		})
-		assert.Nil(t, err)
+		}
+
+		{
+			c := New()
+			c.Provide(func() destroyable { return new(callDestroy) }).Init(destroyable.InitWithCtx)
+			err := runTest(c, func(p Context) {
+				var d destroyable
+				err := p.Get(&d)
+				assert.Nil(t, err)
+				assert.True(t, d.(*callDestroy).inited)
+			})
+			assert.Nil(t, err)
+		}
 	})
 
 	t.Run("call interface init with error", func(t *testing.T) {
@@ -1024,6 +1102,13 @@ func TestRegisterBean_InitFunc(t *testing.T) {
 		{
 			c := New()
 			c.Provide(func() destroyable { return &callDestroy{i: 1} }).Init(destroyable.InitWithError)
+			err := c.Refresh()
+			assert.Error(t, err, "error")
+		}
+
+		{
+			c := New()
+			c.Provide(func() destroyable { return &callDestroy{i: 1} }).Init(destroyable.InitWithCtxError)
 			err := c.Refresh()
 			assert.Error(t, err, "error")
 		}
@@ -1932,22 +2017,22 @@ func TestApplicationContext_Close(t *testing.T) {
 		assert.Panic(t, func() {
 			c := New()
 			c.Object(func() {}).Destroy(func() {})
-		}, "destroy should be func\\(bean\\) or func\\(bean\\)error")
+		}, "destroy should be func\\(bean,\\[ctx\\]\\) or func\\(bean,\\[ctx\\]\\)error")
 
 		assert.Panic(t, func() {
 			c := New()
 			c.Object(func() {}).Destroy(func() int { return 0 })
-		}, "destroy should be func\\(bean\\) or func\\(bean\\)error")
+		}, "destroy should be func\\(bean,\\[ctx\\]\\) or func\\(bean,\\[ctx\\]\\)error")
 
 		assert.Panic(t, func() {
 			c := New()
 			c.Object(func() {}).Destroy(func(int) {})
-		}, "destroy should be func\\(bean\\) or func\\(bean\\)error")
+		}, "destroy should be func\\(bean,\\[ctx\\]\\) or func\\(bean,\\[ctx\\]\\)error")
 
 		assert.Panic(t, func() {
 			c := New()
 			c.Object(func() {}).Destroy(func(int, int) {})
-		}, "destroy should be func\\(bean\\) or func\\(bean\\)error")
+		}, "destroy should be func\\(bean,\\[ctx\\]\\) or func\\(bean,\\[ctx\\]\\)error")
 	})
 
 	t.Run("call destroy fn", func(t *testing.T) {
@@ -2848,7 +2933,10 @@ func TestLazy(t *testing.T) {
 type memory struct {
 }
 
-func (m *memory) OnInit(ctx Context) error {
+func (m *memory) OnInit(ctx context.Context) error {
+	if nil == FromContext(ctx) {
+		panic("invalid context")
+	}
 	fmt.Println("memory.OnInit")
 	return nil
 }
@@ -2861,7 +2949,10 @@ type table struct {
 	_ *memory `autowire:""`
 }
 
-func (t *table) OnInit(ctx Context) error {
+func (t *table) OnInit(ctx context.Context) error {
+	if nil == FromContext(ctx) {
+		panic("invalid context")
+	}
 	fmt.Println("table.OnInit")
 	return nil
 }
