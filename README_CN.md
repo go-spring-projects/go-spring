@@ -25,7 +25,7 @@
 `go get github.com/go-spring-projects/go-spring@latest`
 
 ### 主要特性
-* **IoC容器**: 实现了基于反射的控制反转(IoC)容器，支持结构体、函数和常量的注入。这意味着你可以使用' autowired '标签来自动注入依赖，而不必手动管理它们。
+* **IoC容器**: 实现了基于反射的控制反转(IoC)容器，支持结构体、函数和常量的注入。这意味着你可以使用`autowired`标签来自动注入依赖，而不必手动管理它们。
 * **配置管理**: 受Spring的@Value注释的启发，Go-Spring允许您从多个源(如环境变量、文件、命令行参数等)获取配置项。这为配置管理带来了前所未有的灵活性。
 * **配置验证器**: 通过支持自定义验证器扩展扩展了其健壮的配置管理功能。这使您能够对属性执行有效性检查，确保仅将有效的配置应用于您的应用程序。
 * **结构化日志**: 使用标准库slog提供内置日志记录器支持，以实现有效和简化的日志记录。这种增强提供了清晰、简洁和结构良好的日志信息，有助于系统调试和性能监视。
@@ -66,26 +66,27 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/go-spring-projects/go-spring/gs"
 )
 
 type MyApp struct {
-    Logger *slog.Logger `logger:""`
+	Logger *slog.Logger `logger:""`
 }
 
-func (m *MyApp) OnInit(ctx gs.Context) error {
-    m.Logger.Info("Hello world")
-    return nil
+func (m *MyApp) OnInit(ctx context.Context) error {
+	m.Logger.Info("Hello world")
+	return nil
 }
 
 func main() {
-    // register object bean
-    gs.Object(new(MyApp))
-	
-    // run go-spring boot app
-    gs.Run()
+	// register object bean
+	gs.Object(new(MyApp))
+
+	// run go-spring boot app
+	gs.Run()
 }
 
 // Output:
@@ -97,9 +98,11 @@ func main() {
 ```go
 package mypkg
 
+import "github.com/go-spring-projects/go-spring/gs"
+
 type MyApp struct {}
 
-type NewApp() *MyApp {
+func NewApp() *MyApp {
 	return &MyApp{}
 }
 
@@ -201,6 +204,7 @@ db:
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
@@ -241,7 +245,7 @@ type MysqlDatabase struct {
 	Options DBOptions    `value:"${db}"`
 }
 
-func (md *MysqlDatabase) OnInit(ctx gs.Context) error {
+func (md *MysqlDatabase) OnInit(ctx context.Context) error {
 	md.Logger.Info("mysql connection summary",
 		"url", fmt.Sprintf("mysql://%s:%s@%s:%d/%s", md.Options.UserName, md.Options.Password, md.Options.IP, md.Options.Port, md.Options.DB))
 	return nil
@@ -271,12 +275,13 @@ func main() {
 
 ### 动态刷新属性
 
-允许在运行时动态刷新属性，不仅支持基本数据类型，还支持结构、切片和映射类型。
+允许在运行时动态刷新属性，不仅支持基本数据类型，还支持结构、切片和Map类型。
 
 ```go
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -289,7 +294,7 @@ type Handler struct {
 	Open dync.Bool `value:"${server.open:=true}"`
 }
 
-func (h *Handler) OnInit(ctx gs.Context) error {
+func (h *Handler) OnInit(ctx context.Context) error {
 
 	http.HandleFunc("/server/status", func(writer http.ResponseWriter, request *http.Request) {
 		if !h.Open.Value() {
@@ -306,9 +311,9 @@ type Server struct {
 	Logger *slog.Logger `logger:""`
 }
 
-func (s *Server) OnInit(ctx gs.Context) error {
+func (s *Server) OnInit(ctx context.Context) error {
 
-	props := ctx.(gs.Container).Properties()
+	props := gs.FromContext(ctx).(gs.Container).Properties()
 
 	http.HandleFunc("/server/status/open", func(writer http.ResponseWriter, request *http.Request) {
 		props.Set("server.open", "true")
@@ -337,7 +342,6 @@ func main() {
 	}
 }
 
-
 // Output:
 // 
 // $ curl http://127.0.0.1:7878/server/status
@@ -362,6 +366,7 @@ func main() {
 package main
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"os"
@@ -378,27 +383,27 @@ func init() {
 		Primary bool   `value:"${primary:=false}"`
 	}
 
-    /*
-        logger:
-          # application logger.
-          app:
-            level: debug
-            file: /your/path/app.log
-            console: false
-            primary: true
-    
-          # system logger.
-          sys:
-            level: info
-            file: /your/path/sys.log
-            console: true
-    
-          # trace logger.
-          trace:
-            level: info
-            file: /your/path/trace.log
-            console: false
-    */
+	/*
+	   logger:
+	     # application logger.
+	     app:
+	       level: debug
+	       file: /your/path/app.log
+	       console: false
+	       primary: true
+
+	     # system logger.
+	     sys:
+	       level: info
+	       file: /your/path/sys.log
+	       console: true
+
+	     # trace logger.
+	     trace:
+	       level: info
+	       file: /your/path/trace.log
+	       console: false
+	*/
 
 	gs.OnProperty("logger", func(loggers map[string]Logger) {
 		for name, logger := range loggers {
@@ -447,7 +452,7 @@ type App struct {
 	TraceLogger *slog.Logger `logger:"${app.trace.logger:=trace}"`
 }
 
-func (app *App) OnInit(ctx gs.Context) error {
+func (app *App) OnInit(ctx context.Context) error {
 	app.Logger.Info("hello primary logger")
 	app.SysLogger.Info("hello system logger")
 	app.TraceLogger.Info("hello trace logger")
@@ -455,7 +460,7 @@ func (app *App) OnInit(ctx gs.Context) error {
 }
 
 func main() {
-	
+
 	gs.Property("logger.app.level", "debug")
 	gs.Property("logger.app.file", "./app.log")
 	gs.Property("logger.app.console", "true")

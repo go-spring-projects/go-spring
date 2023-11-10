@@ -66,26 +66,27 @@ In addition to implementing a powerful IoC container similar to Java Spring, Go-
 package main
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/go-spring-projects/go-spring/gs"
 )
 
 type MyApp struct {
-    Logger *slog.Logger `logger:""`
+	Logger *slog.Logger `logger:""`
 }
 
-func (m *MyApp) OnInit(ctx gs.Context) error {
-    m.Logger.Info("Hello world")
-    return nil
+func (m *MyApp) OnInit(ctx context.Context) error {
+	m.Logger.Info("Hello world")
+	return nil
 }
 
 func main() {
-    // register object bean
-    gs.Object(new(MyApp))
-	
-    // run go-spring boot app
-    gs.Run()
+	// register object bean
+	gs.Object(new(MyApp))
+
+	// run go-spring boot app
+	gs.Run()
 }
 
 // Output:
@@ -97,9 +98,11 @@ func main() {
 ```go
 package mypkg
 
+import "github.com/go-spring-projects/go-spring/gs"
+
 type MyApp struct {}
 
-type NewApp() *MyApp {
+func NewApp() *MyApp {
 	return &MyApp{}
 }
 
@@ -202,6 +205,7 @@ In this example, we will use [go-validator/validator](https://github.com/go-vali
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
@@ -242,7 +246,7 @@ type MysqlDatabase struct {
 	Options DBOptions    `value:"${db}"`
 }
 
-func (md *MysqlDatabase) OnInit(ctx gs.Context) error {
+func (md *MysqlDatabase) OnInit(ctx context.Context) error {
 	md.Logger.Info("mysql connection summary",
 		"url", fmt.Sprintf("mysql://%s:%s@%s:%d/%s", md.Options.UserName, md.Options.Password, md.Options.IP, md.Options.Port, md.Options.DB))
 	return nil
@@ -278,6 +282,7 @@ Allows dynamically refresh properties during runtime, not only supporting basic 
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -290,7 +295,7 @@ type Handler struct {
 	Open dync.Bool `value:"${server.open:=true}"`
 }
 
-func (h *Handler) OnInit(ctx gs.Context) error {
+func (h *Handler) OnInit(ctx context.Context) error {
 
 	http.HandleFunc("/server/status", func(writer http.ResponseWriter, request *http.Request) {
 		if !h.Open.Value() {
@@ -307,9 +312,9 @@ type Server struct {
 	Logger *slog.Logger `logger:""`
 }
 
-func (s *Server) OnInit(ctx gs.Context) error {
+func (s *Server) OnInit(ctx context.Context) error {
 
-	props := ctx.(gs.Container).Properties()
+	props := gs.FromContext(ctx).(gs.Container).Properties()
 
 	http.HandleFunc("/server/status/open", func(writer http.ResponseWriter, request *http.Request) {
 		props.Set("server.open", "true")
@@ -338,7 +343,6 @@ func main() {
 	}
 }
 
-
 // Output:
 // 
 // $ curl http://127.0.0.1:7878/server/status
@@ -363,6 +367,7 @@ Automatically injects named logger, the logger library powered by the std [slog]
 package main
 
 import (
+	"context"
 	"io"
 	"log/slog"
 	"os"
@@ -379,27 +384,27 @@ func init() {
 		Primary bool   `value:"${primary:=false}"`
 	}
 
-    /*
-        logger:
-          # application logger.
-          app:
-            level: debug
-            file: /your/path/app.log
-            console: false
-            primary: true
-    
-          # system logger.
-          sys:
-            level: info
-            file: /your/path/sys.log
-            console: true
-    
-          # trace logger.
-          trace:
-            level: info
-            file: /your/path/trace.log
-            console: false
-    */
+	/*
+	   logger:
+	     # application logger.
+	     app:
+	       level: debug
+	       file: /your/path/app.log
+	       console: false
+	       primary: true
+
+	     # system logger.
+	     sys:
+	       level: info
+	       file: /your/path/sys.log
+	       console: true
+
+	     # trace logger.
+	     trace:
+	       level: info
+	       file: /your/path/trace.log
+	       console: false
+	*/
 
 	gs.OnProperty("logger", func(loggers map[string]Logger) {
 		for name, logger := range loggers {
@@ -448,7 +453,7 @@ type App struct {
 	TraceLogger *slog.Logger `logger:"${app.trace.logger:=trace}"`
 }
 
-func (app *App) OnInit(ctx gs.Context) error {
+func (app *App) OnInit(ctx context.Context) error {
 	app.Logger.Info("hello primary logger")
 	app.SysLogger.Info("hello system logger")
 	app.TraceLogger.Info("hello trace logger")
@@ -456,7 +461,7 @@ func (app *App) OnInit(ctx gs.Context) error {
 }
 
 func main() {
-	
+
 	gs.Property("logger.app.level", "debug")
 	gs.Property("logger.app.file", "./app.log")
 	gs.Property("logger.app.console", "true")
