@@ -301,7 +301,7 @@ func (d *BeanDefinition) constructor(ctx Context) error {
 		fnValue := reflect.ValueOf(d.init)
 		fnValues := []reflect.Value{d.Value()}
 		if fnValue.Type().NumIn() > 1 {
-			fnValues = append(fnValues, reflect.ValueOf(WithContext(ctx)))
+			fnValues = append(fnValues, reflect.ValueOf(WithContext(ctx.Context(), ctx)))
 		}
 
 		out := fnValue.Call(fnValues)
@@ -311,7 +311,7 @@ func (d *BeanDefinition) constructor(ctx Context) error {
 	}
 
 	if f, ok := d.Interface().(BeanInit); ok {
-		if err := f.OnInit(WithContext(ctx)); err != nil {
+		if err := f.OnInit(WithContext(ctx.Context(), ctx)); err != nil {
 			return err
 		}
 	}

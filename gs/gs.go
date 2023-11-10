@@ -81,8 +81,8 @@ type Context interface {
 
 type contextKey struct{}
 
-func WithContext(ctx Context) context.Context {
-	return context.WithValue(ctx.Context(), contextKey{}, ctx)
+func WithContext(parent context.Context, ctx Context) context.Context {
+	return context.WithValue(parent, contextKey{}, ctx)
 }
 
 func FromContext(ctx context.Context) Context {
@@ -392,7 +392,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 	}
 
 	c.state = Refreshing
-	c.logger = GetLogger("", utils.TypeName(c))
+	c.logger = GetLogger()
 
 	for _, b := range c.beans {
 		c.registerBean(b)
@@ -828,7 +828,7 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 				tag = parseWireTag(tag).beanName
 			}
 
-			l := GetLogger(tag, utils.TypeName(v))
+			l := GetLogger(WithLogName(tag))
 			if nil == l {
 				return fmt.Errorf("logger field %s not provide: %s", fieldPath, tag)
 			}

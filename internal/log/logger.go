@@ -19,9 +19,9 @@ package log
 import (
 	"log/slog"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
+
+	"github.com/go-spring-projects/go-spring/internal/utils"
 )
 
 type Logger = slog.Logger
@@ -35,19 +35,8 @@ func init() {
 		ReplaceAttr: func(groups []string, attr slog.Attr) slog.Attr {
 			if slog.SourceKey == attr.Key {
 				source := attr.Value.Any().(*slog.Source)
-				idx := strings.LastIndexByte(source.File, '/')
-				if idx == -1 {
-					return attr
-				}
-				// Find the penultimate separator.
-				idx = strings.LastIndexByte(source.File[:idx], '/')
-				if idx == -1 {
-					return attr
-				}
-
-				source.File = source.File[idx+1:]
+				source.File = utils.StripTypeName(source.File)
 			}
-
 			return attr
 		},
 	}
@@ -68,10 +57,10 @@ func SetLogger(loggerName string, logger *Logger, primary ...bool) {
 	}
 }
 
-func GetLogger(loggerName string, typeName string) *Logger {
+func GetLogger(loggerName string) *Logger {
 	if l, ok := loggers.Load(loggerName); ok {
 		named := l.(*namedLogger)
-		return named.logger.With("logger", named.name, "type", filepath.Base(typeName))
+		return named.logger.With("logger", named.name)
 	}
 	return nil
 }

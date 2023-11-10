@@ -90,7 +90,7 @@ func main() {
 }
 
 // Output:
-// time=2023-09-25T14:50:32.927+08:00 level=INFO source=main.go:14 msg="Hello world" logger=go-spring type=main.MyApp
+// time=2023-09-25T14:50:32.927+08:00 level=INFO source=main.go:14 msg="Hello world" logger=go-spring
 ```
 
 #### Bean register
@@ -482,9 +482,9 @@ func main() {
 }
 
 // Output: 
-// {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello primary logger","logger":"app","type":"main.App"}
-// {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello system logger","logger":"sys","type":"main.App"}
-// {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello trace logger","logger":"trace","type":"main.App"}
+// {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello primary logger","logger":"app"}
+// {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello system logger","logger":"sys"}
+// {"time":"2023-10-27T12:10:14.8040121+08:00","level":"INFO","msg":"hello trace logger","logger":"trace"}
 ```
 
 ### 依赖序事件

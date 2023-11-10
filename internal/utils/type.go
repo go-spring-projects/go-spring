@@ -194,3 +194,17 @@ func IsBeanReceiver(t reflect.Type) bool {
 		return IsBeanType(t)
 	}
 }
+
+// StripTypeName returns simpled type name from full pkg path.
+func StripTypeName(file string) string {
+	idx := strings.LastIndexByte(file, '/')
+	if idx == -1 {
+		return file
+	}
+	// Find the penultimate separator.
+	idx = strings.LastIndexByte(file[:idx], '/')
+	if idx == -1 {
+		return file
+	}
+	return file[idx+1:]
+}
