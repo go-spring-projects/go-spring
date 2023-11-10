@@ -79,6 +79,19 @@ type Context interface {
 	Go(fn func(ctx context.Context))
 }
 
+type contextKey struct{}
+
+func WithContext(ctx Context) context.Context {
+	return context.WithValue(ctx.Context(), contextKey{}, ctx)
+}
+
+func FromContext(ctx context.Context) Context {
+	if val := ctx.Value(contextKey{}); val != nil {
+		return val.(Context)
+	}
+	return nil
+}
+
 type tempContainer struct {
 	props           *conf.Properties
 	beans           []*BeanDefinition

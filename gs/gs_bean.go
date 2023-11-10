@@ -17,6 +17,7 @@
 package gs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -66,7 +67,7 @@ func BeanID(typ interface{}, name string) string {
 }
 
 type BeanInit interface {
-	OnInit(ctx Context) error
+	OnInit(ctx context.Context) error
 }
 
 type BeanDestroy interface {
@@ -215,9 +216,24 @@ func validLifeCycleFunc(fnType reflect.Type, beanValue reflect.Value) bool {
 	if !utils.IsFuncType(fnType) {
 		return false
 	}
-	if fnType.NumIn() != 1 || !utils.HasReceiver(fnType, beanValue) {
+
+	switch fnType.NumIn() {
+	case 1:
+		// func(bean)
+		// func(bean) error
+		if !utils.HasReceiver(fnType, beanValue) {
+			return false
+		}
+	case 2:
+		// func(bean, ctx)
+		// func(bean, ctx) error
+		if !utils.HasReceiver(fnType, beanValue) || !utils.IsContextType(fnType.In(1)) {
+			return false
+		}
+	default:
 		return false
 	}
+
 	return utils.ReturnNothing(fnType) || utils.ReturnOnlyError(fnType)
 }
 
@@ -227,7 +243,7 @@ func (d *BeanDefinition) Init(fn interface{}) *BeanDefinition {
 		d.init = fn
 		return d
 	}
-	panic(errors.New("init should be func(bean) or func(bean)error"))
+	panic(errors.New("init should be func(bean,[ctx]) or func(bean,[ctx])error"))
 }
 
 // Destroy Set the destruction function for a bean.
@@ -236,7 +252,7 @@ func (d *BeanDefinition) Destroy(fn interface{}) *BeanDefinition {
 		d.destroy = fn
 		return d
 	}
-	panic(errors.New("destroy should be func(bean) or func(bean)error"))
+	panic(errors.New("destroy should be func(bean,[ctx]) or func(bean,[ctx])error"))
 }
 
 // Export indicates the types of interface to export.
@@ -283,14 +299,19 @@ func (d *BeanDefinition) export(exports ...interface{}) error {
 func (d *BeanDefinition) constructor(ctx Context) error {
 	if d.init != nil {
 		fnValue := reflect.ValueOf(d.init)
-		out := fnValue.Call([]reflect.Value{d.Value()})
+		fnValues := []reflect.Value{d.Value()}
+		if fnValue.Type().NumIn() > 1 {
+			fnValues = append(fnValues, reflect.ValueOf(WithContext(ctx)))
+		}
+
+		out := fnValue.Call(fnValues)
 		if len(out) > 0 && !out[0].IsNil() {
 			return out[0].Interface().(error)
 		}
 	}
 
 	if f, ok := d.Interface().(BeanInit); ok {
-		if err := f.OnInit(ctx); err != nil {
+		if err := f.OnInit(WithContext(ctx)); err != nil {
 			return err
 		}
 	}
@@ -300,6 +321,10 @@ func (d *BeanDefinition) constructor(ctx Context) error {
 func (d *BeanDefinition) destructor() {
 	if d.destroy != nil {
 		fnValue := reflect.ValueOf(d.destroy)
+		fnValues := []reflect.Value{d.Value()}
+		if fnValue.Type().NumIn() > 1 {
+			fnValues = append(fnValues, reflect.ValueOf(context.Background()))
+		}
 		fnValue.Call([]reflect.Value{d.Value()})
 	}
 
