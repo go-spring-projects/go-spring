@@ -489,23 +489,25 @@ func (c *container) resolveBean(b *BeanDefinition) error {
 	if b.method {
 		selector, ok := b.f.Arg(0)
 		if !ok || selector == "" {
-			selector, _ = b.f.In(0)
+			selector, ok = b.f.In(0)
 		}
-		parents, err := c.findBean(selector)
-		if err != nil {
-			return err
-		}
-		n := len(parents)
-		if n > 1 {
-			msg := fmt.Sprintf("found %d parent beans, bean:%q type:%q [", n, selector, b.t.In(0))
-			for _, b := range parents {
-				msg += "( " + b.String() + " ), "
+		if ok {
+			parents, err := c.findBean(selector)
+			if err != nil {
+				return err
 			}
-			msg = msg[:len(msg)-2] + "]"
-			return errors.New(msg)
-		} else if n == 0 {
-			b.status = Deleted
-			return nil
+			n := len(parents)
+			if n > 1 {
+				msg := fmt.Sprintf("found %d parent beans, bean:%q type:%q [", n, selector, b.t.In(0))
+				for _, b := range parents {
+					msg += "( " + b.String() + " ), "
+				}
+				msg = msg[:len(msg)-2] + "]"
+				return errors.New(msg)
+			} else if n == 0 {
+				b.status = Deleted
+				return nil
+			}
 		}
 	}
 

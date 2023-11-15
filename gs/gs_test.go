@@ -3070,8 +3070,12 @@ func (tac *testAutoConfiguration) NewEmpty() *BeanDefinition {
 	return NewBean(new(struct{})).Name("empty")
 }
 
-func (tac *testAutoConfiguration) NewFoo() *testFoo {
+func (tac *testAutoConfiguration) newFoo() *testFoo {
 	return &testFoo{prefix: tac.Prefix}
+}
+
+func (tac *testAutoConfiguration) NewFoo() *BeanDefinition {
+	return NewBean(tac.newFoo)
 }
 
 func (tac *testAutoConfiguration) NewBar(foo *testFoo) (*testBar, error) {
