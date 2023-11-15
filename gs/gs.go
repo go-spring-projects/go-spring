@@ -284,8 +284,8 @@ func (c *container) Configuration(i interface{}) *BeanDefinition {
 			}
 		}
 
-		// depends on parent bean
-		bd.DependsOn(parentBean.ID()).On(cond.OnBean(parentBean.ID()))
+		// Inherit the parent conditions
+		bd.On(cond.OnBean(parentBean.ID()))
 	}
 
 	return c.Accept(parentBean)
