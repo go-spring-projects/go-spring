@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 	"github.com/go-spring-projects/go-spring/conf"
 	"github.com/go-spring-projects/go-spring/internal/utils"
 )
