@@ -362,6 +362,23 @@ func (r *Callable) In(i int) (reflect.Type, bool) {
 	return r.fnType.In(i), true
 }
 
+func (r *Callable) Parent() (selector interface{}, ok bool) {
+	// check receiver
+	if selector, ok = r.In(0); !ok || !utils.IsBeanType(selector.(reflect.Type)) {
+		return nil, false
+	}
+
+	// bean selector
+	if arg, exists := r.Arg(0); exists {
+		switch arg.(type) {
+		case utils.BeanDefinition:
+			return arg, true
+		}
+	}
+
+	return
+}
+
 // Call invokes the function with its binding arguments processed in the IoC
 // container. If the function returns an error, then the Call returns it.
 func (r *Callable) Call(ctx Context) ([]reflect.Value, error) {

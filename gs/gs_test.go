@@ -3048,6 +3048,7 @@ func TestLogLogger(t *testing.T) {
 
 type testFoo struct {
 	prefix string
+	name   string
 }
 
 type testBar struct {
@@ -3070,12 +3071,12 @@ func (tac *testAutoConfiguration) NewEmpty() *BeanDefinition {
 	return NewBean(new(struct{})).Name("empty")
 }
 
-func (tac *testAutoConfiguration) newFoo() *testFoo {
-	return &testFoo{prefix: tac.Prefix}
+func (tac *testAutoConfiguration) newFoo(name string) *testFoo {
+	return &testFoo{prefix: tac.Prefix, name: name}
 }
 
 func (tac *testAutoConfiguration) NewFoo() *BeanDefinition {
-	return NewBean(tac.newFoo)
+	return NewBean(tac.newFoo, "${name}")
 }
 
 func (tac *testAutoConfiguration) NewBar(foo *testFoo) (*testBar, error) {
@@ -3097,6 +3098,7 @@ func TestConfiguration(t *testing.T) {
 		p := conf.New()
 		p.Set("prefix", "hello")
 		p.Set("open", "true")
+		p.Set("name", "go-spring")
 
 		err := c.Properties().Refresh(p)
 		assert.Nil(t, err)
@@ -3109,6 +3111,7 @@ func TestConfiguration(t *testing.T) {
 
 		subject := bd.Interface().(*testConfiguration)
 		assert.Equal(t, subject.Subject.Bar.foo.prefix, "hello")
+		assert.Equal(t, subject.Subject.Bar.foo.name, "go-spring")
 	})
 
 	t.Run("test Configuration with conditional", func(t *testing.T) {
@@ -3118,6 +3121,7 @@ func TestConfiguration(t *testing.T) {
 		p.Set("prefix", "hello")
 		p.Set("open", "true")
 		p.Set("enable", "false")
+		p.Set("name", "go-spring")
 
 		err := c.Properties().Refresh(p)
 		assert.Nil(t, err)

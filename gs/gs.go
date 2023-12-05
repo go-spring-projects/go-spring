@@ -487,10 +487,7 @@ func (c *container) resolveBean(b *BeanDefinition) error {
 
 	// method bean 先确定 parent bean 是否存在
 	if b.method {
-		selector, ok := b.f.Arg(0)
-		if !ok || selector == "" {
-			selector, ok = b.f.In(0)
-		}
+		selector, ok := b.f.Parent()
 		if ok {
 			parents, err := c.findBean(selector)
 			if err != nil {
