@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 )
 
 var validators = map[string]Validator{
@@ -39,13 +39,59 @@ func Register(name string, v Validator) {
 
 // Validate validates a single variable.
 func Validate(tag reflect.StructTag, i interface{}) error {
-	for name, v := range validators {
-		if s, ok := tag.Lookup(name); ok {
-			if err := v.Field(s, i); err != nil {
+	if len(tag) > 0 {
+		for name, v := range validators {
+			if s, ok := tag.Lookup(name); ok && s != "-" {
+				if err := v.Field(s, i); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// ValidateStruct validates a single struct.
+func ValidateStruct(s interface{}) error {
+	sValue := reflect.ValueOf(s)
+	if reflect.Ptr == sValue.Type().Kind() {
+		// ignore validate nil value
+		if sValue.IsNil() {
+			return nil
+		}
+		sValue = sValue.Elem()
+	}
+	return validStruct(sValue)
+}
+
+func validStruct(v reflect.Value) error {
+	vType := v.Type()
+	if reflect.Struct != vType.Kind() {
+		return fmt.Errorf("%s: is not a struct", vType.String())
+	}
+
+	for i := 0; i < v.NumField(); i++ {
+		fieldVal := v.Field(i)
+		fieldType := vType.Field(i)
+		if !fieldType.IsExported() {
+			continue
+		}
+
+		if err := Validate(fieldType.Tag, fieldVal.Interface()); nil != err {
+			return err
+		}
+
+		if reflect.Struct == fieldType.Type.Kind() {
+			if err := validStruct(fieldVal); nil != err {
+				return err
+			}
+		} else if reflect.Ptr == fieldType.Type.Kind() && reflect.Struct == fieldType.Type.Elem().Kind() && !fieldVal.IsNil() {
+			if err := validStruct(fieldVal.Elem()); nil != err {
 				return err
 			}
 		}
 	}
+
 	return nil
 }
 

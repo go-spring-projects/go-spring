@@ -41,7 +41,7 @@ func (d *emptyValidator) Field(tag string, i interface{}) error {
 	return nil
 }
 
-func TestField(t *testing.T) {
+func TestValidateField(t *testing.T) {
 	i := 6
 
 	err := Validate("empty:\"\"", i)
@@ -56,4 +56,29 @@ func TestField(t *testing.T) {
 
 	err = Validate("expr:\"$<3\"", "abc")
 	assert.Error(t, err, "invalid operation\\: string \\< int \\(1:2\\)")
+}
+
+func TestValidateStruct(t *testing.T) {
+	type testForm struct {
+		Age     int `expr:"$>=18"`
+		Summary struct {
+			Weight int `expr:"$>100"`
+		}
+		Skip       *struct{}
+		unexported struct{}
+	}
+
+	tf1 := testForm{Age: 18}
+	tf1.Summary.Weight = 101
+	err := ValidateStruct(tf1)
+	assert.Nil(t, err)
+
+	tf2 := testForm{Age: 17}
+	err = ValidateStruct(tf2)
+	assert.Error(t, err, "validate failed on \"\\$>=18\" for value 17")
+
+	tf3 := testForm{Age: 18}
+	err = ValidateStruct(tf3)
+	assert.Error(t, err, "validate failed on \"\\$>100\" for value 0")
+
 }
