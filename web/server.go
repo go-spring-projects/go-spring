@@ -22,7 +22,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/go-spring-projects/go-spring/web/render"
+	"github.com/go-spring-projects/go-spring/web/binding"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -54,13 +54,7 @@ func NewServer(router *Router, options Options) *Server {
 		}
 	}
 
-	var jsonRenderer = func(ctx context.Context, err error, result interface{}) render.Renderer {
-
-		type jsonResponse struct {
-			Code    int         `json:"code"`
-			Message string      `json:"message,omitempty"`
-			Data    interface{} `json:"data"`
-		}
+	var jsonRenderer = func(ctx *Context, err error, result interface{}) {
 
 		var code = 0
 		var message = ""
@@ -72,10 +66,20 @@ func NewServer(router *Router, options Options) *Server {
 			} else {
 				code = http.StatusInternalServerError
 				message = err.Error()
+
+				if errors.Is(err, binding.ErrBinding) || errors.Is(err, binding.ErrValidate) {
+					code = http.StatusBadRequest
+				}
 			}
 		}
 
-		return render.JsonRenderer{Data: jsonResponse{Code: code, Message: message, Data: result}}
+		type response struct {
+			Code    int         `json:"code"`
+			Message string      `json:"message,omitempty"`
+			Data    interface{} `json:"data"`
+		}
+
+		ctx.JSON(http.StatusOK, response{Code: code, Message: message, Data: result})
 	}
 
 	return &Server{
@@ -121,6 +125,11 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpSvr.Shutdown(ctx)
 }
 
+// Router returns the server router.
+func (s *Server) Router() *Router {
+	return s.router
+}
+
 // NotFound to be used when no route matches.
 // This can be used to render your own 404 Not Found errors.
 func (s *Server) NotFound(handler http.Handler) {
@@ -136,6 +145,12 @@ func (s *Server) MethodNotAllowed(handler http.Handler) {
 // Renderer to be used Response renderer in default.
 func (s *Server) Renderer(renderer Renderer) {
 	s.renderer = renderer
+}
+
+// Use appends a MiddlewareFunc to the chain.
+// Middleware can be used to intercept or otherwise modify requests and/or responses, and are executed in the order that they are applied to the Router.
+func (s *Server) Use(mwf ...MiddlewareFunc) {
+	s.router.Use(mwf...)
 }
 
 // Match attempts to match the given request against the router's registered routes.

@@ -22,6 +22,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"mime/multipart"
+	"net/http"
 	"time"
 
 	"github.com/go-spring-projects/go-spring/gs"
@@ -38,6 +39,19 @@ func (g *Greeting) OnInit(ctx context.Context) error {
 	g.Server.Bind("/greeting", g.Greeting)
 	g.Server.Bind("/health", g.Health)
 	g.Server.Bind("/user/register/{username}/{password}", g.Register)
+	g.Server.Bind("/user/password", g.UpdatePassword)
+
+	g.Server.Use(func(handler http.Handler) http.Handler {
+
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+
+			start := time.Now()
+			handler.ServeHTTP(writer, request)
+			g.Logger.Info("http handle cost",
+				slog.String("path", request.URL.Path), slog.Duration("cost", time.Since(start)))
+		})
+	})
+
 	return nil
 }
 
@@ -57,13 +71,13 @@ func (g *Greeting) Health(ctx context.Context) (string, error) {
 func (g *Greeting) Register(
 	ctx context.Context,
 	req struct {
-		Username  string                `path:"username"`     // 用户名
-		Password  string                `path:"password"`     // 密码
-		HeadImg   *multipart.FileHeader `form:"headImg"`      // 上传头像
-		Captcha   string                `form:"captcha"`      // 验证码
-		UserAgent string                `header:"User-Agent"` // 用户代理
-		Ad        string                `query:"ad"`          // 推广ID
-		Token     string                `cookie:"token"`      // cookie参数
+		Username  string                `path:"username" expr:"len($)>6 && len($)<20"` // username
+		Password  string                `path:"password" expr:"len($)>6 && len($)<20"` // password
+		HeadImg   *multipart.FileHeader `form:"headImg"`                               // upload head image
+		Captcha   string                `form:"captcha" expr:"len($)==4"`              // captcha
+		UserAgent string                `header:"User-Agent"`                          // user agent
+		Ad        string                `query:"ad"`                                   // AD
+		Token     string                `cookie:"token"`                               // token
 	},
 ) string {
 	g.Logger.Info("register user",
@@ -76,6 +90,17 @@ func (g *Greeting) Register(
 		slog.String("ad", req.Ad),
 		slog.String("token", req.Token),
 	)
+	return "ok"
+}
+
+func (g *Greeting) UpdatePassword(
+	ctx context.Context,
+	req struct {
+		Password string `json:"password" expr:"len($) > 6 && len($) < 20"` // password
+		Token    string `cookie:"token"`                                   // token
+	},
+) string {
+	g.Logger.Info("change password", slog.String("password", req.Password))
 	return "ok"
 }
 

@@ -19,7 +19,6 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 type HttpError struct {
@@ -31,10 +30,10 @@ func (e HttpError) Error() string {
 	return fmt.Sprintf("%d: %s", e.Code, e.Message)
 }
 
-func Error(code int, msg ...string) HttpError {
+func Error(code int, format string, args ...interface{}) HttpError {
 	var message = http.StatusText(code)
-	if len(msg) > 0 {
-		message = strings.Join(msg, ",")
+	if len(format) > 0 {
+		message = fmt.Sprintf(format, args...)
 	}
 	return HttpError{Code: code, Message: message}
 }

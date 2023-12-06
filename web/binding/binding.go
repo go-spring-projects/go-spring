@@ -18,6 +18,7 @@
 package binding
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -29,6 +30,9 @@ import (
 
 	"github.com/go-spring-projects/go-spring/conf"
 )
+
+var ErrBinding = errors.New("binding failed")
+var ErrValidate = errors.New("validate failed")
 
 const (
 	MIMEApplicationJSON = "application/json"
@@ -93,12 +97,17 @@ func RegisterBodyBinder(mime string, binder BodyBinder) {
 
 func Bind(i interface{}, r Request) error {
 	if err := bindScope(i, r); err != nil {
-		return err
+		return fmt.Errorf("%w: %v", ErrBinding, err)
 	}
+
 	if err := bindBody(i, r); err != nil {
-		return err
+		return fmt.Errorf("%w: %v", ErrBinding, err)
 	}
-	return conf.ValidateStruct(i)
+
+	if err := conf.ValidateStruct(i); nil != err {
+		return fmt.Errorf("%w: %v", ErrValidate, err)
+	}
+	return nil
 }
 
 func bindBody(i interface{}, r Request) error {
