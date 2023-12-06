@@ -17,24 +17,22 @@
 package web
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"reflect"
 
 	"github.com/go-spring-projects/go-spring/internal/utils"
 	"github.com/go-spring-projects/go-spring/web/binding"
-	"github.com/go-spring-projects/go-spring/web/render"
 )
 
 type Renderer interface {
-	Render(ctx context.Context, err error, result interface{}) render.Renderer
+	Render(ctx *Context, err error, result interface{})
 }
 
-type RendererFunc func(ctx context.Context, err error, result interface{}) render.Renderer
+type RendererFunc func(ctx *Context, err error, result interface{})
 
-func (fn RendererFunc) Render(ctx context.Context, err error, result interface{}) render.Renderer {
-	return fn(ctx, err, result)
+func (fn RendererFunc) Render(ctx *Context, err error, result interface{}) {
+	fn(ctx, err, result)
 }
 
 // Bind convert fn to HandlerFunc.
@@ -76,9 +74,9 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 
 		defer func() {
 			if nil != request.MultipartForm {
-				request.MultipartForm.RemoveAll()
+				_ = request.MultipartForm.RemoveAll()
 			}
-			request.Body.Close()
+			_ = request.Body.Close()
 		}()
 
 		var returnValues []reflect.Value
@@ -93,7 +91,7 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 				}
 
 				// render error response
-				render.Render(ctx, err, nil).Render(writer)
+				render.Render(webCtx, err, nil)
 			}
 		}()
 
@@ -144,7 +142,7 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 		}
 
 		// render response
-		render.Render(ctx, err, result).Render(writer)
+		render.Render(webCtx, err, result)
 	}
 }
 
