@@ -33,6 +33,6 @@ func TestHTMLRenderer(t *testing.T) {
 	err := htmlRender.Render(w)
 
 	assert.Nil(t, err)
-	assert.Equal(t, w.Header().Get("Content-Type"), "text/html; charset=utf-8")
+	assert.Equal(t, htmlRender.ContentType(), "text/html; charset=utf-8")
 	assert.Equal(t, w.Body.String(), "Hello asdklajhdasdd")
 }

@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"math/rand"
 	"mime/multipart"
@@ -36,10 +35,10 @@ type Greeting struct {
 }
 
 func (g *Greeting) OnInit(ctx context.Context) error {
-	g.Server.Bind("/greeting", g.Greeting)
-	g.Server.Bind("/health", g.Health)
-	g.Server.Bind("/user/register/{username}/{password}", g.Register)
-	g.Server.Bind("/user/password", g.UpdatePassword)
+	g.Server.Get("/greeting", g.Greeting)
+	g.Server.Get("/health", g.Health)
+	g.Server.Post("/user/register/{username}/{password}", g.Register)
+	g.Server.Post("/user/password", g.UpdatePassword)
 
 	g.Server.Use(func(handler http.Handler) http.Handler {
 
@@ -61,11 +60,11 @@ func (g *Greeting) Greeting(ctx context.Context) string {
 	return "greeting!!!"
 }
 
-func (g *Greeting) Health(ctx context.Context) (string, error) {
+func (g *Greeting) Health(ctx context.Context) error {
 	if 0 == rand.Int()%2 {
-		return "", fmt.Errorf("health check failed")
+		return web.Error(400, "health check failed")
 	}
-	return time.Now().String(), nil
+	return nil
 }
 
 func (g *Greeting) Register(

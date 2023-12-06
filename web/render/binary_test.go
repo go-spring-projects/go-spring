@@ -33,9 +33,10 @@ func TestBinaryRenderer(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	err := BinaryRenderer{ContentType: "application/octet-stream", Data: data}.Render(w)
+	render := BinaryRenderer{DataType: "application/octet-stream", Data: data}
+	err := render.Render(w)
 	assert.Nil(t, err)
 
-	assert.Equal(t, w.Header().Get("Content-Type"), "application/octet-stream")
+	assert.Equal(t, render.ContentType(), "application/octet-stream")
 	assert.Equal(t, w.Body.Bytes(), data)
 }
