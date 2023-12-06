@@ -176,9 +176,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	s.router.ServeHTTP(w, req)
 }
 
-// Get returns a route registered with the given name.
-func (s *Server) Get(name string) *Route {
-	return s.router.Get(name)
+// GetRoute returns a route registered with the given name.
+func (s *Server) GetRoute(name string) *Route {
+	return s.router.GetRoute(name)
 }
 
 // StrictSlash defines the trailing slash behavior for new routes. The initial
@@ -250,20 +250,25 @@ func (s *Server) HandleFunc(path string, f func(http.ResponseWriter, *http.Reque
 }
 
 // Bind registers a new route with a matcher for the URL path.
+// Automatic binding request to handler input params, following functions:
 //
 // func(ctx context.Context)
 //
 // func(ctx context.Context) R
 //
+// func(ctx context.Context) error
+//
 // func(ctx context.Context, req T) R
 //
+// func(ctx context.Context, req T) error
+//
 // func(ctx context.Context, req T) (R, error)
-func (s *Server) Bind(path string, f interface{}, r ...Renderer) *Route {
+func (s *Server) Bind(path string, handler interface{}, r ...Renderer) *Route {
 	var renderer = s.renderer
 	if len(r) > 0 {
 		renderer = r[0]
 	}
-	return s.Handle(path, Bind(f, renderer))
+	return s.Handle(path, Bind(handler, renderer))
 }
 
 // Headers registers a new route with a matcher for request header values.
@@ -319,4 +324,58 @@ func (s *Server) BuildVarsFunc(f BuildVarsFunc) *Route {
 // are explored depth-first.
 func (s *Server) Walk(walkFn WalkFunc) error {
 	return s.router.Walk(walkFn)
+}
+
+// Get registers a new GET route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Get(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodGet)
+}
+
+// Head registers a new HEAD route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Head(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodHead)
+}
+
+// Post registers a new POST route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Post(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodPost)
+}
+
+// Put registers a new PUT route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Put(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodPut)
+}
+
+// Patch registers a new PATCH route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Patch(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodPatch)
+}
+
+// Delete registers a new DELETE route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Delete(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodDelete)
+}
+
+// Connect registers a new CONNECT route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Connect(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodConnect)
+}
+
+// Options registers a new OPTIONS route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Options(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodOptions)
+}
+
+// Trace registers a new TRACE route with a matcher for the URL path of the get method.
+// See Server.Bind()
+func (s *Server) Trace(path string, handler interface{}, r ...Renderer) *Route {
+	return s.Bind(path, handler, r...).Methods(http.MethodTrace)
 }

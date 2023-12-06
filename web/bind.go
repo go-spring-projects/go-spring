@@ -41,7 +41,11 @@ func (fn RendererFunc) Render(ctx *Context, err error, result interface{}) {
 //
 // func(ctx context.Context) R
 //
+// func(ctx context.Context) error
+//
 // func(ctx context.Context, req T) R
+//
+// func(ctx context.Context, req T) error
 //
 // func(ctx context.Context, req T) (R, error)
 //
@@ -53,17 +57,19 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 
 	switch h := fn.(type) {
 	case http.HandlerFunc:
-		return h
+		return warpHandlerCtx(h)
 	case http.Handler:
-		return h.ServeHTTP
+		return warpHandlerCtx(h.ServeHTTP)
 	case func(http.ResponseWriter, *http.Request):
-		return h
+		return warpHandlerCtx(h)
 	default:
 		// valid func
 		if err := validMappingFunc(fnType); nil != err {
 			panic(err)
 		}
 	}
+
+	firstOutIsErrorType := 1 == fnType.NumOut() && utils.IsErrorType(fnType.Out(0))
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
@@ -128,14 +134,15 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 				// nothing
 				return
 			case 1:
-				// write response
-				result = returnValues[0].Interface()
+				if firstOutIsErrorType {
+					err, _ = returnValues[0].Interface().(error)
+				} else {
+					result = returnValues[0].Interface()
+				}
 			case 2:
 				// check error
 				result = returnValues[0].Interface()
-				if e, ok := returnValues[1].Interface().(error); ok && nil != e {
-					err = e
-				}
+				err, _ = returnValues[1].Interface().(error)
 			default:
 				panic("unreachable here")
 			}
@@ -149,7 +156,9 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 func validMappingFunc(fnType reflect.Type) error {
 	// func(ctx context.Context)
 	// func(ctx context.Context) R
+	// func(ctx context.Context) error
 	// func(ctx context.Context, req T) R
+	// func(ctx context.Context, req T) error
 	// func(ctx context.Context, req T) (R, error)
 	if !utils.IsFuncType(fnType) {
 		return fmt.Errorf("%s: not a func", fnType.String())
@@ -174,13 +183,30 @@ func validMappingFunc(fnType reflect.Type) error {
 		}
 	}
 
-	if 0 < fnType.NumOut() && utils.IsErrorType(fnType.Out(0)) {
-		return fmt.Errorf("%s: first output param type not be error", fnType.String())
-	}
+	switch fnType.NumOut() {
+	case 0: // nothing
+	case 1: // R | error
+	case 2: // (R, error)
+		if utils.IsErrorType(fnType.Out(0)) {
+			return fmt.Errorf("%s: first output param type not be error", fnType.String())
+		}
 
-	if 1 < fnType.NumOut() && !utils.IsErrorType(fnType.Out(1)) {
-		return fmt.Errorf("%s: second output type (%s) must a error", fnType.String(), fnType.Out(1).String())
+		if !utils.IsErrorType(fnType.Out(1)) {
+			return fmt.Errorf("%s: second output type (%s) must a error", fnType.String(), fnType.Out(1).String())
+		}
 	}
 
 	return nil
+}
+
+func warpHandlerCtx(handler http.HandlerFunc) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		webCtx := &Context{Writer: writer, Request: request}
+		handler.ServeHTTP(writer, requestWithCtx(request, webCtx))
+	}
+}
+
+func requestWithCtx(r *http.Request, webCtx *Context) *http.Request {
+	ctx := WithContext(r.Context(), webCtx)
+	return r.WithContext(ctx)
 }

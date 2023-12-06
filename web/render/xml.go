@@ -27,11 +27,11 @@ type XmlRenderer struct {
 	Data   interface{}
 }
 
-func (x XmlRenderer) Render(writer http.ResponseWriter) error {
-	if header := writer.Header(); len(header.Get("Content-Type")) == 0 {
-		header.Set("Content-Type", "application/xml; charset=utf-8")
-	}
+func (x XmlRenderer) ContentType() string {
+	return "application/xml; charset=utf-8"
+}
 
+func (x XmlRenderer) Render(writer http.ResponseWriter) error {
 	encoder := xml.NewEncoder(writer)
 	if len(x.Prefix) > 0 || len(x.Indent) > 0 {
 		encoder.Indent(x.Prefix, x.Indent)

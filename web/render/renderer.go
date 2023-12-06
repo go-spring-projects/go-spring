@@ -16,9 +16,12 @@
 
 package render
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // Renderer writes data with custom ContentType and headers.
 type Renderer interface {
+	ContentType() string
 	Render(writer http.ResponseWriter) error
 }

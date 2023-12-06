@@ -186,6 +186,11 @@ func (c *Context) SetCookie(name, value string, maxAge int, path, domain string,
 // Render writes the response headers and calls render.Render to render data.
 func (c *Context) Render(code int, render render.Renderer) error {
 	if code > 0 {
+		if len(c.Writer.Header().Get("Content-Type")) <= 0 {
+			if contentType := render.ContentType(); len(contentType) > 0 {
+				c.Writer.Header().Set("Content-Type", contentType)
+			}
+		}
 		c.Writer.WriteHeader(code)
 	}
 	return render.Render(c.Writer)
@@ -203,7 +208,7 @@ func (c *Context) String(code int, format string, args ...interface{}) error {
 
 // Data writes some data into the body stream and updates the HTTP code.
 func (c *Context) Data(code int, contentType string, data []byte) error {
-	return c.Render(code, render.BinaryRenderer{ContentType: contentType, Data: data})
+	return c.Render(code, render.BinaryRenderer{DataType: contentType, Data: data})
 }
 
 // JSON serializes the given struct as JSON into the response body.
