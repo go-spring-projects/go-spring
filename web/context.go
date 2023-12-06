@@ -23,6 +23,7 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"strings"
 	"unicode"
@@ -71,38 +72,43 @@ func (c *Context) ContentType() string {
 }
 
 // Header returns the named header in the request.
-func (c *Context) Header(key string) string {
-	return c.Request.Header.Get(key)
+func (c *Context) Header(key string) (string, bool) {
+	if values, ok := c.Request.Header[textproto.CanonicalMIMEHeaderKey(key)]; ok && len(values) > 0 {
+		return values[0], true
+	}
+	return "", false
 }
 
 // Cookie returns the named cookie provided in the request.
-func (c *Context) Cookie(name string) string {
+func (c *Context) Cookie(name string) (string, bool) {
 	cookie, err := c.Request.Cookie(name)
 	if err != nil {
-		return ""
+		return "", false
 	}
-	val, _ := url.QueryUnescape(cookie.Value)
-	return val
+	if val, err := url.QueryUnescape(cookie.Value); nil == err {
+		return val, true
+	}
+	return cookie.Value, true
 }
 
 // PathParam returns the named variables in the request.
-func (c *Context) PathParam(name string) string {
+func (c *Context) PathParam(name string) (string, bool) {
 	if params := mux.Vars(c.Request); nil != params {
 		if value, ok := params[name]; ok {
-			return value
+			return value, true
 		}
 	}
-	return ""
+	return "", false
 }
 
 // QueryParam returns the named query in the request.
-func (c *Context) QueryParam(name string) string {
+func (c *Context) QueryParam(name string) (string, bool) {
 	if values := c.Request.URL.Query(); nil != values {
 		if value, ok := values[name]; ok && len(value) > 0 {
-			return value[0]
+			return value[0], true
 		}
 	}
-	return ""
+	return "", false
 }
 
 // FormParams returns the form in the request.
@@ -181,6 +187,15 @@ func (c *Context) SetCookie(name, value string, maxAge int, path, domain string,
 		Secure:   secure,
 		HttpOnly: httpOnly,
 	})
+}
+
+// Bind checks the Method and Content-Type to select a binding engine automatically,
+// Depending on the "Content-Type" header different bindings are used, for example:
+//
+//	"application/json" --> JSON binding
+//	"application/xml"  --> XML binding
+func (c *Context) Bind(r interface{}) error {
+	return binding.Bind(r, c)
 }
 
 // Render writes the response headers and calls render.Render to render data.

@@ -16,7 +16,10 @@
 
 package web
 
-import "time"
+import (
+	"crypto/tls"
+	"time"
+)
 
 type Options struct {
 	// Addr optionally specifies the TCP address for the server to listen on,
@@ -73,4 +76,16 @@ type Options struct {
 	// size of the request body.
 	// If zero, DefaultMaxHeaderBytes is used.
 	MaxHeaderBytes int `value:"${max-header-bytes:=0}"`
+}
+
+func (options Options) IsTls() bool {
+	return len(options.CertFile) > 0 && len(options.KeyFile) > 0
+}
+
+func (options Options) GetCertificate(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	cert, err := tls.LoadX509KeyPair(options.CertFile, options.KeyFile)
+	if err != nil {
+		return nil, err
+	}
+	return &cert, nil
 }

@@ -44,20 +44,24 @@ func (r *MockRequest) ContentType() string {
 	return r.contentType
 }
 
-func (r *MockRequest) Header(key string) string {
-	return r.headers[key]
+func (r *MockRequest) Header(key string) (string, bool) {
+	value, ok := r.headers[key]
+	return value, ok
 }
 
-func (r *MockRequest) Cookie(name string) string {
-	return r.cookies[name]
+func (r *MockRequest) Cookie(name string) (string, bool) {
+	value, ok := r.cookies[name]
+	return value, ok
 }
 
-func (r *MockRequest) QueryParam(name string) string {
-	return r.queryParams[name]
+func (r *MockRequest) QueryParam(name string) (string, bool) {
+	value, ok := r.queryParams[name]
+	return value, ok
 }
 
-func (r *MockRequest) PathParam(name string) string {
-	return r.pathParams[name]
+func (r *MockRequest) PathParam(name string) (string, bool) {
+	value, ok := r.pathParams[name]
+	return value, ok
 }
 
 func (r *MockRequest) FormParams() (url.Values, error) {

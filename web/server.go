@@ -19,10 +19,7 @@ package web
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"net/http"
-
-	"github.com/go-spring-projects/go-spring/web/binding"
 )
 
 // A Server defines parameters for running an HTTP server.
@@ -42,53 +39,18 @@ func NewServer(router *Router, options Options) *Server {
 	}
 
 	var tlsConfig *tls.Config
-	if len(options.CertFile) > 0 && len(options.KeyFile) > 0 {
+	if options.IsTls() {
 		tlsConfig = &tls.Config{
-			GetCertificate: func(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
-				cert, err := tls.LoadX509KeyPair(options.CertFile, options.KeyFile)
-				if err != nil {
-					return nil, err
-				}
-				return &cert, nil
-			},
+			GetCertificate: options.GetCertificate,
 		}
-	}
-
-	var jsonRenderer = func(ctx *Context, err error, result interface{}) {
-
-		var code = 0
-		var message = ""
-		if nil != err {
-			var e HttpError
-			if errors.As(err, &e) {
-				code = e.Code
-				message = e.Message
-			} else {
-				code = http.StatusInternalServerError
-				message = err.Error()
-
-				if errors.Is(err, binding.ErrBinding) || errors.Is(err, binding.ErrValidate) {
-					code = http.StatusBadRequest
-				}
-			}
-		}
-
-		type response struct {
-			Code    int         `json:"code"`
-			Message string      `json:"message,omitempty"`
-			Data    interface{} `json:"data"`
-		}
-
-		ctx.JSON(http.StatusOK, response{Code: code, Message: message, Data: result})
 	}
 
 	return &Server{
 		options:  options,
 		router:   router,
-		renderer: RendererFunc(jsonRenderer),
+		renderer: RendererFunc(defaultJsonRender),
 		httpSvr: &http.Server{
 			Addr:              addr,
-			Handler:           router,
 			TLSConfig:         tlsConfig,
 			ReadTimeout:       options.ReadTimeout,
 			ReadHeaderTimeout: options.ReadHeaderTimeout,
@@ -108,6 +70,7 @@ func (s *Server) Addr() string {
 // calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
 func (s *Server) Run() error {
+	s.httpSvr.Handler = s
 	if nil != s.httpSvr.TLSConfig {
 		return s.httpSvr.ListenAndServeTLS(s.options.CertFile, s.options.KeyFile)
 	}
