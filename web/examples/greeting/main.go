@@ -43,7 +43,6 @@ func (g *Greeting) OnInit(ctx context.Context) error {
 	g.Server.Use(func(handler http.Handler) http.Handler {
 
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-
 			start := time.Now()
 			handler.ServeHTTP(writer, request)
 			g.Logger.Info("http handle cost",

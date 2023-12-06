@@ -17,6 +17,7 @@
 package web
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -165,21 +166,21 @@ func validMappingFunc(fnType reflect.Type) error {
 	}
 
 	if fnType.NumIn() < 1 || fnType.NumIn() > 2 {
-		return fmt.Errorf("%s: invalid input parameter count", fnType.String())
+		return fmt.Errorf("%s: expect func(ctx context.Context, [T]) [R, error]", fnType.String())
 	}
 
 	if fnType.NumOut() > 2 {
-		return fmt.Errorf("%s: invalid output parameter count", fnType.String())
+		return fmt.Errorf("%s: expect func(ctx context.Context, [T]) [(R, error)]", fnType.String())
 	}
 
 	if !utils.IsContextType(fnType.In(0)) {
-		return fmt.Errorf("%s: first input param type (%s) must be context", fnType.String(), fnType.In(0).String())
+		return fmt.Errorf("%s: expect func(ctx context.Context, [T]) [(R, error)", fnType.String())
 	}
 
 	if fnType.NumIn() > 1 {
 		argType := fnType.In(1)
 		if !(reflect.Struct == argType.Kind() || (reflect.Ptr == argType.Kind() && reflect.Struct == argType.Elem().Kind())) {
-			return fmt.Errorf("%s: second input param type (%s) must be struct/*struct", fnType.String(), argType.String())
+			return fmt.Errorf("%s: input param type (%s) must be struct/*struct", fnType.String(), argType.String())
 		}
 	}
 
@@ -188,11 +189,11 @@ func validMappingFunc(fnType reflect.Type) error {
 	case 1: // R | error
 	case 2: // (R, error)
 		if utils.IsErrorType(fnType.Out(0)) {
-			return fmt.Errorf("%s: first output param type not be error", fnType.String())
+			return fmt.Errorf("%s: expect func(...) (R, error)", fnType.String())
 		}
 
 		if !utils.IsErrorType(fnType.Out(1)) {
-			return fmt.Errorf("%s: second output type (%s) must a error", fnType.String(), fnType.Out(1).String())
+			return fmt.Errorf("%s: expect func(...) (R, error)", fnType.String())
 		}
 	}
 
@@ -209,4 +210,32 @@ func warpHandlerCtx(handler http.HandlerFunc) http.HandlerFunc {
 func requestWithCtx(r *http.Request, webCtx *Context) *http.Request {
 	ctx := WithContext(r.Context(), webCtx)
 	return r.WithContext(ctx)
+}
+
+func defaultJsonRender(ctx *Context, err error, result interface{}) {
+
+	var code = 0
+	var message = ""
+	if nil != err {
+		var e HttpError
+		if errors.As(err, &e) {
+			code = e.Code
+			message = e.Message
+		} else {
+			code = http.StatusInternalServerError
+			message = err.Error()
+
+			if errors.Is(err, binding.ErrBinding) || errors.Is(err, binding.ErrValidate) {
+				code = http.StatusBadRequest
+			}
+		}
+	}
+
+	type response struct {
+		Code    int         `json:"code"`
+		Message string      `json:"message,omitempty"`
+		Data    interface{} `json:"data"`
+	}
+
+	ctx.JSON(http.StatusOK, response{Code: code, Message: message, Data: result})
 }

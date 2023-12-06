@@ -44,10 +44,10 @@ const (
 
 type Request interface {
 	ContentType() string
-	Header(key string) string
-	Cookie(name string) string
-	PathParam(name string) string
-	QueryParam(name string) string
+	Header(key string) (string, bool)
+	Cookie(name string) (string, bool)
+	PathParam(name string) (string, bool)
+	QueryParam(name string) (string, bool)
 	FormParams() (url.Values, error)
 	MultipartParams(maxMemory int64) (*multipart.Form, error)
 	RequestBody() io.Reader
@@ -70,7 +70,7 @@ var scopeTags = map[BindScope]string{
 	BindScopeCookie: "cookie",
 }
 
-var scopeGetters = map[BindScope]func(r Request, name string) string{
+var scopeGetters = map[BindScope]func(r Request, name string) (string, bool){
 	BindScopeURI:    Request.PathParam,
 	BindScopeQuery:  Request.QueryParam,
 	BindScopeHeader: Request.Header,
@@ -95,6 +95,11 @@ func RegisterBodyBinder(mime string, binder BodyBinder) {
 	bodyBinders[mime] = binder
 }
 
+// Bind checks the Method and Content-Type to select a binding engine automatically,
+// Depending on the "Content-Type" header different bindings are used, for example:
+//
+//	"application/json" --> JSON binding
+//	"application/xml"  --> XML binding
 func Bind(i interface{}, r Request) error {
 	if err := bindScope(i, r); err != nil {
 		return fmt.Errorf("%w: %v", ErrBinding, err)
@@ -138,8 +143,7 @@ func bindScope(i interface{}, r Request) error {
 		fv := ev.Field(j)
 		ft := et.Field(j)
 		for scope := BindScopeURI; scope < BindScopeBody; scope++ {
-			err := bindScopeField(scope, fv, ft, r)
-			if err != nil {
+			if err := bindScopeField(scope, fv, ft, r); err != nil {
 				return err
 			}
 		}
@@ -149,14 +153,11 @@ func bindScope(i interface{}, r Request) error {
 
 func bindScopeField(scope BindScope, v reflect.Value, field reflect.StructField, r Request) error {
 	if tag, loaded := scopeTags[scope]; loaded {
-		if name, ok := field.Tag.Lookup(tag); ok {
-			if name == "-" {
-				return nil // ignore bind
-			}
-			val := scopeGetters[scope](r, name)
-			err := bindData(v, val)
-			if err != nil {
-				return err
+		if name, ok := field.Tag.Lookup(tag); ok && name != "-" {
+			if val, exists := scopeGetters[scope](r, name); exists {
+				if err := bindData(v, val); err != nil {
+					return err
+				}
 			}
 		}
 	}
