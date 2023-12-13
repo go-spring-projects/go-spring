@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"reflect"
 
 	"github.com/go-spring-projects/go-spring/internal/utils"
@@ -75,9 +76,12 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
 		// param of context
-		webCtx := &Context{Writer: writer, Request: request}
-		ctx := WithContext(request.Context(), webCtx)
-		ctxValue := reflect.ValueOf(ctx)
+		ctx := request.Context()
+		webCtx := FromContext(ctx)
+		if nil == webCtx {
+			webCtx = &Context{Writer: writer, Request: request}
+			ctx = WithContext(request.Context(), webCtx)
+		}
 
 		defer func() {
 			if nil != request.MultipartForm {
@@ -101,6 +105,8 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 				render.Render(webCtx, err, nil)
 			}
 		}()
+
+		ctxValue := reflect.ValueOf(ctx)
 
 		switch fnType.NumIn() {
 		case 1:
@@ -202,8 +208,12 @@ func validMappingFunc(fnType reflect.Type) error {
 
 func warpHandlerCtx(handler http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		webCtx := &Context{Writer: writer, Request: request}
-		handler.ServeHTTP(writer, requestWithCtx(request, webCtx))
+		if nil != FromContext(request.Context()) {
+			handler.ServeHTTP(writer, request)
+		} else {
+			webCtx := &Context{Writer: writer, Request: request}
+			handler.ServeHTTP(writer, requestWithCtx(request, webCtx))
+		}
 	}
 }
 
@@ -238,4 +248,23 @@ func defaultJsonRender(ctx *Context, err error, result interface{}) {
 	}
 
 	ctx.JSON(http.StatusOK, response{Code: code, Message: message, Data: result})
+}
+
+func lastChar(str string) uint8 {
+	if str == "" {
+		panic("The length of the string can't be 0")
+	}
+	return str[len(str)-1]
+}
+
+func joinPaths(absolutePath, relativePath string) string {
+	if relativePath == "" {
+		return absolutePath
+	}
+
+	finalPath := path.Join(absolutePath, relativePath)
+	if lastChar(relativePath) == '/' && lastChar(finalPath) != '/' {
+		return finalPath + "/"
+	}
+	return finalPath
 }
