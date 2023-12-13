@@ -35,20 +35,42 @@ type Greeting struct {
 }
 
 func (g *Greeting) OnInit(ctx context.Context) error {
-	g.Server.Get("/greeting", g.Greeting)
-	g.Server.Get("/health", g.Health)
-	g.Server.Post("/user/register/{username}/{password}", g.Register)
-	g.Server.Post("/user/password", g.UpdatePassword)
 
+	// request time middleware
 	g.Server.Use(func(handler http.Handler) http.Handler {
-
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			start := time.Now()
 			handler.ServeHTTP(writer, request)
-			g.Logger.Info("http handle cost",
-				slog.String("path", request.URL.Path), slog.Duration("cost", time.Since(start)))
+			g.Logger.Info("request time",
+				slog.String("path", request.URL.Path), slog.String("method", request.Method), slog.Duration("cost", time.Since(start)))
 		})
 	})
+
+	// cors middleware
+	g.Server.Use(func(handler http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			writer.Header().Set("Access-Control-Allow-Origin", "*")
+			writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+			writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type")
+
+			// preflight request
+			if request.Method == http.MethodOptions {
+				writer.WriteHeader(http.StatusNoContent)
+				return
+			}
+
+			handler.ServeHTTP(writer, request)
+		})
+	})
+
+	g.Server.Get("/greeting", g.Greeting)
+	g.Server.Get("/health", g.Health)
+
+	user := g.Server.Group("/user")
+	{
+		user.Post("/register/{username}/{password}", g.Register)
+		user.Post("/password", g.UpdatePassword)
+	}
 
 	return nil
 }

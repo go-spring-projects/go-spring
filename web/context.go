@@ -29,8 +29,8 @@ import (
 	"unicode"
 
 	"github.com/go-spring-projects/go-spring/web/binding"
+	"github.com/go-spring-projects/go-spring/web/internal/mux"
 	"github.com/go-spring-projects/go-spring/web/render"
-	"github.com/gorilla/mux"
 )
 
 type contextKey struct{}

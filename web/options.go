@@ -82,6 +82,16 @@ func (options Options) IsTls() bool {
 	return len(options.CertFile) > 0 && len(options.KeyFile) > 0
 }
 
+func (options Options) TlsConfig() *tls.Config {
+	if !options.IsTls() {
+		return nil
+	}
+
+	return &tls.Config{
+		GetCertificate: options.GetCertificate,
+	}
+}
+
 func (options Options) GetCertificate(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	cert, err := tls.LoadX509KeyPair(options.CertFile, options.KeyFile)
 	if err != nil {

@@ -24,7 +24,6 @@ import (
 	"net/http"
 
 	"github.com/go-spring-projects/go-spring/gs"
-	"github.com/go-spring-projects/go-spring/gs/arg"
 	"github.com/go-spring-projects/go-spring/gs/cond"
 	"github.com/go-spring-projects/go-spring/web"
 )
@@ -60,5 +59,5 @@ func (sc *serverConfiguration) OnAppStop(ctx context.Context) {
 }
 
 func (sc *serverConfiguration) NewServer() *gs.BeanDefinition {
-	return gs.NewBean(web.NewServer, arg.Value(web.NewRouter()), "${http}").Primary()
+	return gs.NewBean(web.NewServer, "${http}").Primary()
 }
