@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/go-spring-projects/go-spring/internal/utils"
+	"go-spring.dev/spring/internal/utils"
 )
 
 type nodeType int

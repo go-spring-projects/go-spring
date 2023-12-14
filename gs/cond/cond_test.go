@@ -20,9 +20,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/internal/utils"
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 	"github.com/golang/mock/gomock"
+	"go-spring.dev/spring/internal/utils"
+	"go-spring.dev/spring/internal/utils/assert"
 )
 
 func TestOK(t *testing.T) {

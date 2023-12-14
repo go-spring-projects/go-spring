@@ -2,14 +2,14 @@
 
 [![GoDoc][1]][2] [![Build Status][7]][8] [![Codecov][9]][10] [![Release][5]][6] [![license-Apache 2][3]][4]
 
-[1]: https://godoc.org/github.com/go-spring-projects/go-spring?status.svg
-[2]: https://godoc.org/github.com/go-spring-projects/go-spring
+[1]: https://godoc.org/go-spring.dev/spring?status.svg
+[2]: https://godoc.org/go-spring.dev/spring
 [3]: https://img.shields.io/badge/license-Apache%202-blue.svg
 [4]: LICENSE
 [5]: https://img.shields.io/github/v/release/go-spring-projects/go-spring?color=orange
-[6]: https://github.com/go-spring-projects/go-spring/releases/latest
-[7]: https://github.com/go-spring-projects/go-spring/workflows/Go%20Test/badge.svg?branch=master
-[8]: https://github.com/go-spring-projects/go-spring/actions?query=branch%3Amaster
+[6]: https://go-spring.dev/spring/releases/latest
+[7]: https://go-spring.dev/spring/workflows/Go%20Test/badge.svg?branch=master
+[8]: https://go-spring.dev/spring/actions?query=branch%3Amaster
 [9]: https://codecov.io/gh/go-spring-projects/go-spring/graph/badge.svg?token=BQ6OKWWOF0
 [10]: https://codecov.io/gh/go-spring-projects/go-spring
 
@@ -22,7 +22,7 @@ This project initial code based from [go-spring/go-spring](https://github.com/go
 English | [中文](README_CN.md)  
 
 ### Install
-`go get github.com/go-spring-projects/go-spring@latest`
+`go get go-spring.dev/spring@latest`
 
 ### Features
 * **IoC Container**: Implements an inversion of control (IoC) container based on reflection, supporting the injection of structs, functions, and constants. This means you can use the `autowired` tag to automatically inject dependencies without having to manage them manually.
@@ -69,7 +69,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/go-spring-projects/go-spring/gs"
+	"go-spring.dev/spring/gs"
 )
 
 type MyApp struct {
@@ -98,7 +98,7 @@ func main() {
 ```go
 package mypkg
 
-import "github.com/go-spring-projects/go-spring/gs"
+import "go-spring.dev/spring/gs"
 
 type MyApp struct {}
 
@@ -209,8 +209,8 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/go-spring-projects/go-spring/conf"
-	"github.com/go-spring-projects/go-spring/gs"
+	"go-spring.dev/spring/conf"
+	"go-spring.dev/spring/gs"
 	"gopkg.in/validator.v2"
 )
 
@@ -287,8 +287,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-spring-projects/go-spring/dync"
-	"github.com/go-spring-projects/go-spring/gs"
+	"go-spring.dev/spring/dync"
+	"go-spring.dev/spring/gs"
 )
 
 type Handler struct {
@@ -373,7 +373,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-spring-projects/go-spring/gs"
+	"go-spring.dev/spring/gs"
 )
 
 func init() {
@@ -531,8 +531,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-spring-projects/go-spring/gs"
 	"github.com/urfave/cli/v2"
+	"go-spring.dev/spring/gs"
 )
 
 //import _ "testapp/pkg/infra"

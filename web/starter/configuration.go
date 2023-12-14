@@ -23,9 +23,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-spring-projects/go-spring/gs"
-	"github.com/go-spring-projects/go-spring/gs/cond"
-	"github.com/go-spring-projects/go-spring/web"
+	"go-spring.dev/spring/gs"
+	"go-spring.dev/spring/gs/cond"
+	"go-spring.dev/spring/web"
 )
 
 func init() {

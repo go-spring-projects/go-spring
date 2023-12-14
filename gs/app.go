@@ -27,8 +27,8 @@ import (
 	"syscall"
 	"unicode/utf8"
 
-	"github.com/go-spring-projects/go-spring/conf"
-	"github.com/go-spring-projects/go-spring/gs/arg"
+	"go-spring.dev/spring/conf"
+	"go-spring.dev/spring/gs/arg"
 )
 
 // AppEvent start and stop events

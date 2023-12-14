@@ -20,7 +20,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-spring-projects/go-spring/web/internal/mux"
+	"go-spring.dev/spring/web/internal/mux"
 )
 
 // A Server defines parameters for running an HTTP server.

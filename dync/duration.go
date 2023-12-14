@@ -21,7 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/go-spring-projects/go-spring/conf"
+	"go-spring.dev/spring/conf"
 )
 
 var _ conf.Value = (*Duration)(nil)

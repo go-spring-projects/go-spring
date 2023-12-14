@@ -20,8 +20,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 	"github.com/golang/mock/gomock"
+	"go-spring.dev/spring/internal/utils/assert"
 )
 
 func TestBeanSelector(t *testing.T) {

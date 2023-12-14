@@ -20,9 +20,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/gs/cond"
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
 	"github.com/golang/mock/gomock"
+	"go-spring.dev/spring/gs/cond"
+	"go-spring.dev/spring/internal/utils/assert"
 )
 
 func TestBind(t *testing.T) {

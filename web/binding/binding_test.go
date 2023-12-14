@@ -24,8 +24,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
-	"github.com/go-spring-projects/go-spring/web/binding"
+	"go-spring.dev/spring/internal/utils/assert"
+	"go-spring.dev/spring/web/binding"
 )
 
 type MockRequest struct {

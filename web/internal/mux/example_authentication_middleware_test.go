@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/go-spring-projects/go-spring/web/internal/mux"
+	"go-spring.dev/spring/web/internal/mux"
 )
 
 // Define our struct

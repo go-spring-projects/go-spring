@@ -23,7 +23,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-spring-projects/go-spring/internal/utils"
+	"go-spring.dev/spring/internal/utils"
 )
 
 var (

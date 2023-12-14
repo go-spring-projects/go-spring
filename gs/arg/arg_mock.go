@@ -7,7 +7,7 @@ package arg
 import (
 	reflect "reflect"
 
-	cond "github.com/go-spring-projects/go-spring/gs/cond"
+	cond "go-spring.dev/spring/gs/cond"
 	gomock "github.com/golang/mock/gomock"
 )
 

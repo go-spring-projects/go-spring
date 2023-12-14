@@ -20,8 +20,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
-	"github.com/go-spring-projects/go-spring/internal/utils/testdata"
+	"go-spring.dev/spring/internal/utils/assert"
+	"go-spring.dev/spring/internal/utils/testdata"
 )
 
 func TestPatchValue(t *testing.T) {

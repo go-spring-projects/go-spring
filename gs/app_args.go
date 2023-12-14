@@ -21,7 +21,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-spring-projects/go-spring/conf"
+	"go-spring.dev/spring/conf"
 )
 
 // EnvPrefix environment variable prefix。

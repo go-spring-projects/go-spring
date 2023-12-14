@@ -25,8 +25,8 @@ import (
 	"reflect"
 	"runtime"
 
-	"github.com/go-spring-projects/go-spring/gs/cond"
-	"github.com/go-spring-projects/go-spring/internal/utils"
+	"go-spring.dev/spring/gs/cond"
+	"go-spring.dev/spring/internal/utils"
 )
 
 // Context defines some methods of IoC container that Callable use.

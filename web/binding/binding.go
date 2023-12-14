@@ -28,7 +28,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-spring-projects/go-spring/conf"
+	"go-spring.dev/spring/conf"
 )
 
 var ErrBinding = errors.New("binding failed")

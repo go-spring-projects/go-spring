@@ -3,7 +3,7 @@ package mux_test
 import (
 	"fmt"
 
-	"github.com/go-spring-projects/go-spring/web/internal/mux"
+	"go-spring.dev/spring/web/internal/mux"
 )
 
 // This example demonstrates building a dynamic URL using

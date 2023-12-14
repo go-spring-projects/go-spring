@@ -2,9 +2,9 @@ module examples
 
 go 1.21.1
 
-replace github.com/go-spring-projects/go-spring => ../../
+replace go-spring.dev/spring => ../../
 
-require github.com/go-spring-projects/go-spring v0.0.0-00010101000000-000000000000
+require go-spring.dev/spring v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/expr-lang/expr v1.15.7 // indirect

@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
+	"go-spring.dev/spring/internal/utils/assert"
 )
 
 func TestRead(t *testing.T) {

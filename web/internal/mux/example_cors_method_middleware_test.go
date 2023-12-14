@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/go-spring-projects/go-spring/web/internal/mux"
+	"go-spring.dev/spring/web/internal/mux"
 )
 
 func ExampleCORSMethodMiddleware() {
