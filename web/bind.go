@@ -23,8 +23,8 @@ import (
 	"path"
 	"reflect"
 
-	"github.com/go-spring-projects/go-spring/internal/utils"
-	"github.com/go-spring-projects/go-spring/web/binding"
+	"go-spring.dev/spring/internal/utils"
+	"go-spring.dev/spring/web/binding"
 )
 
 type Renderer interface {

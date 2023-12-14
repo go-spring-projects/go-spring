@@ -1,4 +1,4 @@
-module github.com/go-spring-projects/go-spring
+module go-spring.dev/spring
 
 go 1.21
 

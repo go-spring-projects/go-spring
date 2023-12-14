@@ -23,8 +23,8 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/go-spring-projects/go-spring/conf"
-	"github.com/go-spring-projects/go-spring/internal/utils"
+	"go-spring.dev/spring/conf"
+	"go-spring.dev/spring/internal/utils"
 )
 
 // A Field represents a refreshable struct field.

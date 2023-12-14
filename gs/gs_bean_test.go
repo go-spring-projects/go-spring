@@ -23,10 +23,10 @@ import (
 	"reflect"
 	"testing"
 
-	pkg1 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar"
-	pkg2 "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo"
-	"github.com/go-spring-projects/go-spring/internal/utils"
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
+	pkg1 "go-spring.dev/spring/gs/testdata/pkg/bar"
+	pkg2 "go-spring.dev/spring/gs/testdata/pkg/foo"
+	"go-spring.dev/spring/internal/utils"
+	"go-spring.dev/spring/internal/utils/assert"
 )
 
 //func TestParseSingletonTag(t *testing.T) {
@@ -106,18 +106,18 @@ func TestBeanDefinition_Match(t *testing.T) {
 		beanName string
 		expect   bool
 	}{
-		{NewBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "SamePkg", true},
+		{NewBean(new(pkg2.SamePkg)), "go-spring.dev/spring/gs/testdata/pkg/foo/pkg.SamePkg", "SamePkg", true},
 		{NewBean(new(pkg2.SamePkg)), "", "SamePkg", true},
-		{NewBean(new(pkg2.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "", true},
-		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
+		{NewBean(new(pkg2.SamePkg)), "go-spring.dev/spring/gs/testdata/pkg/foo/pkg.SamePkg", "", true},
+		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "go-spring.dev/spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
 		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "", "pkg2", true},
-		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
-		{NewBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "SamePkg", true},
+		{NewBean(new(pkg2.SamePkg)).Name("pkg2"), "go-spring.dev/spring/gs/testdata/pkg/foo/pkg.SamePkg", "pkg2", true},
+		{NewBean(new(pkg1.SamePkg)), "go-spring.dev/spring/gs/testdata/pkg/bar/pkg.SamePkg", "SamePkg", true},
 		{NewBean(new(pkg1.SamePkg)), "", "SamePkg", true},
-		{NewBean(new(pkg1.SamePkg)), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "", true},
-		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
+		{NewBean(new(pkg1.SamePkg)), "go-spring.dev/spring/gs/testdata/pkg/bar/pkg.SamePkg", "", true},
+		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "go-spring.dev/spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
 		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "", "pkg1", true},
-		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "github.com/go-spring-projects/go-spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
+		{NewBean(new(pkg1.SamePkg)).Name("pkg1"), "go-spring.dev/spring/gs/testdata/pkg/bar/pkg.SamePkg", "pkg1", true},
 	}
 
 	for i, s := range data {
@@ -186,17 +186,17 @@ func TestObjectBean(t *testing.T) {
 
 			NewBean(newHistoryTeacher("")): {
 				"historyTeacher",
-				"github.com/go-spring-projects/go-spring/gs/gs.historyTeacher",
+				"go-spring.dev/spring/gs/gs.historyTeacher",
 			},
 
 			NewBean(new(pkg2.SamePkg)): {
 				"SamePkg",
-				"github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
+				"go-spring.dev/spring/gs/testdata/pkg/foo/pkg.SamePkg",
 			},
 
 			NewBean(new(pkg2.SamePkg)).Name("pkg2"): {
 				"pkg2",
-				"github.com/go-spring-projects/go-spring/gs/testdata/pkg/foo/pkg.SamePkg",
+				"go-spring.dev/spring/gs/testdata/pkg/foo/pkg.SamePkg",
 			},
 		}
 

@@ -26,16 +26,16 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
-	"github.com/go-spring-projects/go-spring/internal/utils/testdata"
-	pkg1 "github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/bar"
-	pkg2 "github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo"
+	"go-spring.dev/spring/internal/utils/assert"
+	"go-spring.dev/spring/internal/utils/testdata"
+	pkg1 "go-spring.dev/spring/internal/utils/testdata/pkg/bar"
+	pkg2 "go-spring.dev/spring/internal/utils/testdata/pkg/foo"
 )
 
 type SamePkg struct{}
 
 func (p *SamePkg) Package() {
-	fmt.Println("github.com/go-spring-projects/go-spring/internal/utils/utils.SamePkg")
+	fmt.Println("go-spring.dev/spring/internal/utils/utils.SamePkg")
 }
 
 func TestPkgPath(t *testing.T) {
@@ -177,7 +177,7 @@ func TestPkgPath(t *testing.T) {
 			reflect.TypeOf(pkg1.SamePkg{}),
 			reflect.Struct,
 			"SamePkg",
-			"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/bar",
+			"go-spring.dev/spring/internal/utils/testdata/pkg/bar",
 		},
 		{
 			reflect.TypeOf(new(pkg1.SamePkg)),
@@ -201,7 +201,7 @@ func TestPkgPath(t *testing.T) {
 			reflect.TypeOf(pkg2.SamePkg{}),
 			reflect.Struct,
 			"SamePkg",
-			"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo",
+			"go-spring.dev/spring/internal/utils/testdata/pkg/foo",
 		},
 		{
 			reflect.TypeOf(new(pkg2.SamePkg)),
@@ -359,22 +359,22 @@ func TestTypeName(t *testing.T) {
 		reflect.TypeOf(&[]string{"string"}):     {"string", "*[]string"},
 		reflect.TypeOf(make(map[string]string)): {"map[string]string", "map[string]string"},
 
-		pkg1.SamePkg{}:                             {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "pkg.SamePkg"},
-		new(pkg1.SamePkg):                          {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "*pkg.SamePkg"},
-		reflect.TypeOf(make([]pkg1.SamePkg, 0)):    {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "[]pkg.SamePkg"},
-		reflect.TypeOf(&[]pkg1.SamePkg{}):          {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "*[]pkg.SamePkg"},
+		pkg1.SamePkg{}:                             {"go-spring.dev/spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "pkg.SamePkg"},
+		new(pkg1.SamePkg):                          {"go-spring.dev/spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "*pkg.SamePkg"},
+		reflect.TypeOf(make([]pkg1.SamePkg, 0)):    {"go-spring.dev/spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "[]pkg.SamePkg"},
+		reflect.TypeOf(&[]pkg1.SamePkg{}):          {"go-spring.dev/spring/internal/utils/testdata/pkg/bar/pkg.SamePkg", "*[]pkg.SamePkg"},
 		reflect.TypeOf(make(map[int]pkg1.SamePkg)): {"map[int]pkg.SamePkg", "map[int]pkg.SamePkg"},
 
-		pkg2.SamePkg{}:                             {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "pkg.SamePkg"},
-		new(pkg2.SamePkg):                          {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "*pkg.SamePkg"},
-		reflect.TypeOf(make([]pkg2.SamePkg, 0)):    {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "[]pkg.SamePkg"},
-		reflect.TypeOf(&[]pkg2.SamePkg{}):          {"github.com/go-spring-projects/go-spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "*[]pkg.SamePkg"},
+		pkg2.SamePkg{}:                             {"go-spring.dev/spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "pkg.SamePkg"},
+		new(pkg2.SamePkg):                          {"go-spring.dev/spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "*pkg.SamePkg"},
+		reflect.TypeOf(make([]pkg2.SamePkg, 0)):    {"go-spring.dev/spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "[]pkg.SamePkg"},
+		reflect.TypeOf(&[]pkg2.SamePkg{}):          {"go-spring.dev/spring/internal/utils/testdata/pkg/foo/pkg.SamePkg", "*[]pkg.SamePkg"},
 		reflect.TypeOf(make(map[int]pkg2.SamePkg)): {"map[int]pkg.SamePkg", "map[int]pkg.SamePkg"},
 
-		SamePkg{}:                             {"github.com/go-spring-projects/go-spring/internal/utils/utils.SamePkg", "utils.SamePkg"},
-		new(SamePkg):                          {"github.com/go-spring-projects/go-spring/internal/utils/utils.SamePkg", "*utils.SamePkg"},
-		reflect.TypeOf(make([]SamePkg, 0)):    {"github.com/go-spring-projects/go-spring/internal/utils/utils.SamePkg", "[]utils.SamePkg"},
-		reflect.TypeOf(&[]SamePkg{}):          {"github.com/go-spring-projects/go-spring/internal/utils/utils.SamePkg", "*[]utils.SamePkg"},
+		SamePkg{}:                             {"go-spring.dev/spring/internal/utils/utils.SamePkg", "utils.SamePkg"},
+		new(SamePkg):                          {"go-spring.dev/spring/internal/utils/utils.SamePkg", "*utils.SamePkg"},
+		reflect.TypeOf(make([]SamePkg, 0)):    {"go-spring.dev/spring/internal/utils/utils.SamePkg", "[]utils.SamePkg"},
+		reflect.TypeOf(&[]SamePkg{}):          {"go-spring.dev/spring/internal/utils/utils.SamePkg", "*[]utils.SamePkg"},
 		reflect.TypeOf(make(map[int]SamePkg)): {"map[int]utils.SamePkg", "map[int]utils.SamePkg"},
 	}
 

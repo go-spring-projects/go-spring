@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"sync/atomic"
 
-	"github.com/go-spring-projects/go-spring/conf"
+	"go-spring.dev/spring/conf"
 )
 
 var _ conf.Value = (*Value[any])(nil)

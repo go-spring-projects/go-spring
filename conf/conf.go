@@ -28,12 +28,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-spring-projects/go-spring/conf/internal"
-	"github.com/go-spring-projects/go-spring/conf/prop"
-	"github.com/go-spring-projects/go-spring/conf/toml"
-	"github.com/go-spring-projects/go-spring/conf/yaml"
-	"github.com/go-spring-projects/go-spring/internal/utils"
 	"github.com/spf13/cast"
+	"go-spring.dev/spring/conf/internal"
+	"go-spring.dev/spring/conf/prop"
+	"go-spring.dev/spring/conf/toml"
+	"go-spring.dev/spring/conf/yaml"
+	"go-spring.dev/spring/internal/utils"
 )
 
 // Splitter splits string into []string by some characters.

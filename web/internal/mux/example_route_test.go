@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/go-spring-projects/go-spring/web/internal/mux"
+	"go-spring.dev/spring/web/internal/mux"
 )
 
 // This example demonstrates setting a regular expression matcher for

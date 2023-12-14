@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-spring-projects/go-spring/internal/utils/assert"
+	"go-spring.dev/spring/internal/utils/assert"
 )
 
 func startApplication(cfgLocation string, fn func(Context)) *App {

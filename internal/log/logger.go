@@ -21,7 +21,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/go-spring-projects/go-spring/internal/utils"
+	"go-spring.dev/spring/internal/utils"
 )
 
 type Logger = slog.Logger

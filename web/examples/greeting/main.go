@@ -24,9 +24,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-spring-projects/go-spring/gs"
-	"github.com/go-spring-projects/go-spring/web"
-	_ "github.com/go-spring-projects/go-spring/web/starter"
+	"go-spring.dev/spring/gs"
+	"go-spring.dev/spring/web"
+	_ "go-spring.dev/spring/web/starter"
 )
 
 type Greeting struct {

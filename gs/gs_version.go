@@ -34,7 +34,7 @@ var Banner = `
 func init() {
 	if buildInfo, ok := debug.ReadBuildInfo(); ok {
 		for _, pkg := range buildInfo.Deps {
-			if strings.HasPrefix(pkg.Path, "github.com/go-spring-projects/go-spring") {
+			if strings.HasPrefix(pkg.Path, "go-spring.dev/spring") {
 				Version = pkg.Version
 				break
 			}
