@@ -7,9 +7,9 @@
 [3]: https://img.shields.io/badge/license-Apache%202-blue.svg
 [4]: LICENSE
 [5]: https://img.shields.io/github/v/release/go-spring-projects/go-spring?color=orange
-[6]: https://go-spring.dev/spring/releases/latest
-[7]: https://go-spring.dev/spring/workflows/Go%20Test/badge.svg?branch=master
-[8]: https://go-spring.dev/spring/actions?query=branch%3Amaster
+[6]: https://github.com/go-spring-projects/go-spring/releases/latest
+[7]: https://github.com/go-spring-projects/go-spring/workflows/Go%20Test/badge.svg?branch=master
+[8]: https://github.com/go-spring-projects/go-spring/actions?query=branch%3Amaster
 [9]: https://codecov.io/gh/go-spring-projects/go-spring/graph/badge.svg?token=BQ6OKWWOF0
 [10]: https://codecov.io/gh/go-spring-projects/go-spring
 
