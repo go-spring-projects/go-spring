@@ -58,11 +58,11 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 
 	switch h := fn.(type) {
 	case http.HandlerFunc:
-		return warpHandlerCtx(h)
+		return warpContext(h)
 	case http.Handler:
-		return warpHandlerCtx(h.ServeHTTP)
+		return warpContext(h.ServeHTTP)
 	case func(http.ResponseWriter, *http.Request):
-		return warpHandlerCtx(h)
+		return warpContext(h)
 	default:
 		// valid func
 		if err := validMappingFunc(fnType); nil != err {
@@ -75,12 +75,8 @@ func Bind(fn interface{}, render Renderer) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 
 		// param of context
-		ctx := request.Context()
-		webCtx := FromContext(ctx)
-		if nil == webCtx {
-			webCtx = &Context{Writer: writer, Request: request}
-			ctx = WithContext(request.Context(), webCtx)
-		}
+		webCtx := &Context{Writer: writer, Request: request}
+		ctx := WithContext(request.Context(), webCtx)
 
 		defer func() {
 			if nil != request.MultipartForm {
@@ -205,20 +201,11 @@ func validMappingFunc(fnType reflect.Type) error {
 	return nil
 }
 
-func warpHandlerCtx(handler http.HandlerFunc) http.HandlerFunc {
+func warpContext(handler http.HandlerFunc) http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		if nil != FromContext(request.Context()) {
-			handler.ServeHTTP(writer, request)
-		} else {
-			webCtx := &Context{Writer: writer, Request: request}
-			handler.ServeHTTP(writer, requestWithCtx(request, webCtx))
-		}
+		webCtx := &Context{Writer: writer, Request: request}
+		handler.ServeHTTP(writer, request.WithContext(WithContext(request.Context(), webCtx)))
 	}
-}
-
-func requestWithCtx(r *http.Request, webCtx *Context) *http.Request {
-	ctx := WithContext(r.Context(), webCtx)
-	return r.WithContext(ctx)
 }
 
 func defaultJsonRender(ctx *Context, err error, result interface{}) {

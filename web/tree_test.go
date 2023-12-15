@@ -72,7 +72,7 @@ func TestTree(t *testing.T) {
 
 	tr.InsertRoute(mGET, "/hubs/{hubID}/view", hHubView1)
 	tr.InsertRoute(mGET, "/hubs/{hubID}/view/*", hHubView2)
-	sr := &routerGroup{tree: &node{}}
+	sr := NewRouter()
 	sr.Get("/users", hHubView3)
 	tr.InsertRoute(mGET, "/hubs/{hubID}/*", sr)
 	tr.InsertRoute(mGET, "/hubs/{hubID}/users", hHubView3)
@@ -127,7 +127,7 @@ func TestTree(t *testing.T) {
 	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
-		rctx := &Context{}
+		rctx := &RouteContext{}
 
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
@@ -243,7 +243,7 @@ func TestTreeMoar(t *testing.T) {
 	// log.Println("~~~~~~~~~")
 
 	for i, tt := range tests {
-		rctx := &Context{}
+		rctx := &RouteContext{}
 
 		_, handlers, _ := tr.FindRoute(rctx, tt.m, tt.r)
 
@@ -309,7 +309,7 @@ func TestTreeRegexp(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		rctx := &Context{}
+		rctx := &RouteContext{}
 
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
@@ -360,7 +360,7 @@ func TestTreeRegexpRecursive(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		rctx := &Context{}
+		rctx := &RouteContext{}
 
 		_, handlers, _ := tr.FindRoute(rctx, mGET, tt.r)
 
@@ -387,7 +387,7 @@ func TestTreeRegexpRecursive(t *testing.T) {
 func TestTreeRegexMatchWholeParam(t *testing.T) {
 	hStub1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
-	rctx := &Context{}
+	rctx := &RouteContext{}
 	tr := &node{}
 	tr.InsertRoute(mGET, "/{id:[0-9]+}", hStub1)
 	tr.InsertRoute(mGET, "/{x:.+}/foo", hStub1)
@@ -498,11 +498,12 @@ func BenchmarkTreeGet(b *testing.B) {
 	tr.InsertRoute(mGET, "/pinggggg", h2)
 	tr.InsertRoute(mGET, "/hello", h1)
 
+	mctx := &RouteContext{}
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		mctx := &Context{}
+		mctx.Reset()
 		tr.FindRoute(mctx, mGET, "/ping/123/456")
 	}
 }
