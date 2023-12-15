@@ -19,16 +19,13 @@ package web
 import (
 	"context"
 	"net/http"
-
-	"go-spring.dev/spring/web/internal/mux"
 )
 
 // A Server defines parameters for running an HTTP server.
 type Server struct {
 	options Options
 	httpSvr *http.Server
-
-	RouterGroup
+	Router
 }
 
 // NewServer returns a new server instance.
@@ -39,10 +36,16 @@ func NewServer(options Options) *Server {
 		addr = ":8080" // default port: 8080
 	}
 
+	var router = options.Router
+	if nil == router {
+		router = NewRouter()
+	}
+
 	svr := &Server{
 		options: options,
 		httpSvr: &http.Server{
 			Addr:              addr,
+			Handler:           router,
 			TLSConfig:         options.TlsConfig(),
 			ReadTimeout:       options.ReadTimeout,
 			ReadHeaderTimeout: options.ReadHeaderTimeout,
@@ -50,15 +53,9 @@ func NewServer(options Options) *Server {
 			IdleTimeout:       options.IdleTimeout,
 			MaxHeaderBytes:    options.MaxHeaderBytes,
 		},
-		RouterGroup: &routerGroup{
-			basePath: "/",
-			router:   mux.NewRouter(),
-			renderer: RendererFunc(defaultJsonRender),
-		},
+		Router: router,
 	}
 
-	svr.NotFound(notFound())
-	svr.MethodNotAllowed(notAllowed())
 	return svr
 }
 
@@ -71,7 +68,6 @@ func (s *Server) Addr() string {
 // calls Serve to handle requests on incoming connections.
 // Accepted connections are configured to enable TCP keep-alives.
 func (s *Server) Run() error {
-	s.httpSvr.Handler = s
 	if nil != s.httpSvr.TLSConfig {
 		return s.httpSvr.ListenAndServeTLS(s.options.CertFile, s.options.KeyFile)
 	}
@@ -87,14 +83,4 @@ func (s *Server) Run() error {
 // error returned from closing the Server's underlying Listener(s).
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.httpSvr.Shutdown(ctx)
-}
-
-func notFound() http.Handler {
-	return http.NotFoundHandler()
-}
-
-func notAllowed() http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		http.Error(writer, "405 method not allowed", http.StatusMethodNotAllowed)
-	})
 }

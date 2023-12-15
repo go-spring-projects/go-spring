@@ -29,7 +29,6 @@ import (
 	"unicode"
 
 	"go-spring.dev/spring/web/binding"
-	"go-spring.dev/spring/web/internal/mux"
 	"go-spring.dev/spring/web/render"
 )
 
@@ -55,9 +54,33 @@ type Context struct {
 	// or to be sent by a client.
 	Request *http.Request
 
+	routes Routes
+
 	// SameSite allows a server to define a cookie attribute making it impossible for
 	// the browser to send this cookie along with cross-site requests.
 	sameSite http.SameSite
+
+	// URLParams are the stack of routeParams captured during the
+	// routing lifecycle across a stack of sub-routers.
+	urlParams RouteParams
+
+	// routeParams matched for the current sub-router. It is
+	// intentionally unexported so it can't be tampered.
+	routeParams RouteParams
+
+	// Routing path/method override used during the route search.
+	routePath   string
+	routeMethod string
+
+	// The endpoint routing pattern that matched the request URI path
+	// or `RoutePath` of the current sub-router. This value will update
+	// during the lifecycle of a request passing through a stack of
+	// sub-routers.
+	routePattern  string
+	routePatterns []string
+
+	methodNotAllowed bool
+	methodsAllowed   []methodTyp
 }
 
 // Context returns the request's context.
@@ -93,12 +116,7 @@ func (c *Context) Cookie(name string) (string, bool) {
 
 // PathParam returns the named variables in the request.
 func (c *Context) PathParam(name string) (string, bool) {
-	if params := mux.Vars(c.Request); nil != params {
-		if value, ok := params[name]; ok {
-			return value, true
-		}
-	}
-	return "", false
+	return c.urlParams.Get(name)
 }
 
 // QueryParam returns the named query in the request.
@@ -297,6 +315,44 @@ func (c *Context) ClientIP() string {
 	return remoteIP.String()
 }
 
+// Reset context to initial state
+func (c *Context) Reset() {
+	c.Writer = nil
+	c.Request = nil
+	c.sameSite = 0
+	c.routes = nil
+	c.routePath = ""
+	c.routeMethod = ""
+	c.routePattern = ""
+	c.routePatterns = c.routePatterns[:0]
+	c.urlParams.Keys = c.urlParams.Keys[:0]
+	c.urlParams.Values = c.urlParams.Values[:0]
+	c.routeParams.Keys = c.routeParams.Keys[:0]
+	c.routeParams.Values = c.routeParams.Values[:0]
+	c.methodNotAllowed = false
+	c.methodsAllowed = c.methodsAllowed[:0]
+}
+
+// RouteParams is a structure to track URL routing parameters efficiently.
+type RouteParams struct {
+	Keys, Values []string
+}
+
+// Add will append a URL parameter to the end of the route param
+func (s *RouteParams) Add(key, value string) {
+	s.Keys = append(s.Keys, key)
+	s.Values = append(s.Values, value)
+}
+
+func (s *RouteParams) Get(key string) (value string, ok bool) {
+	for index, k := range s.Keys {
+		if key == k {
+			return s.Values[index], true
+		}
+	}
+	return "", false
+}
+
 // https://stackoverflow.com/questions/53069040/checking-a-string-contains-only-ascii-characters
 func isASCII(s string) bool {
 	for i := 0; i < len(s); i++ {
@@ -324,4 +380,14 @@ func bodyAllowedForStatus(status int) bool {
 		return false
 	}
 	return true
+}
+
+func notFound() http.Handler {
+	return http.NotFoundHandler()
+}
+
+func notAllowed() http.Handler {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		http.Error(writer, "405 method not allowed", http.StatusMethodNotAllowed)
+	})
 }
