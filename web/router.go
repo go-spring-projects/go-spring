@@ -281,6 +281,9 @@ type routerGroup struct {
 // Use appends a MiddlewareFunc to the chain.
 // Middleware can be used to intercept or otherwise modify requests and/or responses, and are executed in the order that they are applied to the Router.
 func (rg *routerGroup) Use(mwf ...MiddlewareFunc) {
+	if rg.handler != nil {
+		panic("middlewares must be defined before routes registers")
+	}
 	rg.middlewares = append(rg.middlewares, mwf...)
 }
 
