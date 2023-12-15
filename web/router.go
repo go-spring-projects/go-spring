@@ -48,7 +48,7 @@ type Router interface {
 	Renderer(renderer Renderer)
 
 	// Group creates a new router group.
-	Group(pattern string) Router
+	Group(pattern string, fn ...func(subRouter Router)) Router
 
 	// Handle registers a new route with a matcher for the URL pattern.
 	Handle(pattern string, handler http.Handler)
@@ -254,7 +254,7 @@ type Routes interface {
 	// Match searches the routing tree for a handler that matches
 	// the method/path - similar to routing a http request, but without
 	// executing the handler thereafter.
-	Match(webCtx *Context, method, path string) bool
+	Match(ctx *RouteContext, method, path string) bool
 }
 
 // NewRouter returns a new router instance.
@@ -262,7 +262,7 @@ func NewRouter() Router {
 	return &routerGroup{
 		tree:     &node{},
 		renderer: RendererFunc(defaultJsonRender),
-		pool:     &sync.Pool{New: func() interface{} { return &Context{} }},
+		pool:     &sync.Pool{New: func() interface{} { return &RouteContext{} }},
 	}
 }
 
@@ -313,25 +313,23 @@ func (rg *routerGroup) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	webCtx := FromContext(r.Context())
-	if nil != webCtx {
+	ctx := FromRouteContext(r.Context())
+	if nil != ctx {
 		rg.handler.ServeHTTP(w, r)
 		return
 	}
 
 	// get context from pool
-	webCtx = rg.pool.Get().(*Context)
-	webCtx.Writer = w
-	webCtx.Request = r
-	webCtx.routes = rg
+	ctx = rg.pool.Get().(*RouteContext)
+	ctx.Routes = rg
 
 	// with context
-	r = r.WithContext(WithContext(r.Context(), webCtx))
+	r = r.WithContext(WithRouteContext(r.Context(), ctx))
 	rg.handler.ServeHTTP(w, r)
 
 	// put context to pool
-	webCtx.Reset()
-	rg.pool.Put(webCtx)
+	ctx.Reset()
+	rg.pool.Put(ctx)
 
 }
 
@@ -346,23 +344,23 @@ func (rg *routerGroup) updateSubRoutes(fn func(subMux *routerGroup)) {
 	}
 }
 
-func (rg *routerGroup) nextRoutePath(webCtx *Context) string {
+func (rg *routerGroup) nextRoutePath(ctx *RouteContext) string {
 	routePath := "/"
-	nx := len(webCtx.routeParams.Keys) - 1 // index of last param in list
-	if nx >= 0 && webCtx.routeParams.Keys[nx] == "*" && len(webCtx.routeParams.Values) > nx {
-		routePath = "/" + webCtx.routeParams.Values[nx]
+	nx := len(ctx.routeParams.Keys) - 1 // index of last param in list
+	if nx >= 0 && ctx.routeParams.Keys[nx] == "*" && len(ctx.routeParams.Values) > nx {
+		routePath = "/" + ctx.routeParams.Values[nx]
 	}
 	return routePath
 }
 
-// routeHTTP routes a http.Request through the routing tree to serve
+// routeHTTP Routes a http.Request through the routing tree to serve
 // the matching handler for a particular http method.
 func (rg *routerGroup) routeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Grab the route context object
-	webCtx := FromContext(r.Context())
+	ctx := FromRouteContext(r.Context())
 
 	// The request routing path
-	routePath := webCtx.routePath
+	routePath := ctx.RoutePath
 	if routePath == "" {
 		if r.URL.RawPath != "" {
 			routePath = r.URL.RawPath
@@ -374,22 +372,22 @@ func (rg *routerGroup) routeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if webCtx.routeMethod == "" {
-		webCtx.routeMethod = r.Method
+	if ctx.RouteMethod == "" {
+		ctx.RouteMethod = r.Method
 	}
 
-	method, ok := methodMap[webCtx.routeMethod]
+	method, ok := methodMap[ctx.RouteMethod]
 	if !ok {
 		rg.NotAllowedHandler().ServeHTTP(w, r)
 		return
 	}
 
 	// Find the route
-	if _, _, h := rg.tree.FindRoute(webCtx, method, routePath); h != nil {
+	if _, _, h := rg.tree.FindRoute(ctx, method, routePath); h != nil {
 		h.ServeHTTP(w, r)
 		return
 	}
-	if webCtx.methodNotAllowed {
+	if ctx.methodNotAllowed {
 		rg.NotAllowedHandler().ServeHTTP(w, r)
 	} else {
 		rg.NotFoundHandler().ServeHTTP(w, r)
@@ -397,8 +395,11 @@ func (rg *routerGroup) routeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // Group creates a new router group.
-func (rg *routerGroup) Group(pattern string) Router {
+func (rg *routerGroup) Group(pattern string, fn ...func(subRouter Router)) Router {
 	subRouter := &routerGroup{tree: &node{}, renderer: rg.renderer, pool: rg.pool}
+	for _, f := range fn {
+		f(subRouter)
+	}
 	rg.Mount(pattern, subRouter)
 	return subRouter
 }
@@ -427,15 +428,15 @@ func (rg *routerGroup) Mount(pattern string, handler http.Handler) {
 	}
 
 	mountHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		webCtx := FromContext(r.Context())
+		ctx := FromRouteContext(r.Context())
 
 		// shift the url path past the previous subrouter
-		webCtx.routePath = rg.nextRoutePath(webCtx)
+		ctx.RoutePath = rg.nextRoutePath(ctx)
 
 		// reset the wildcard URLParam which connects the subrouter
-		n := len(webCtx.urlParams.Keys) - 1
-		if n >= 0 && webCtx.urlParams.Keys[n] == "*" && len(webCtx.urlParams.Values) > n {
-			webCtx.urlParams.Values[n] = ""
+		n := len(ctx.URLParams.Keys) - 1
+		if n >= 0 && ctx.URLParams.Keys[n] == "*" && len(ctx.URLParams.Values) > n {
+			ctx.URLParams.Values[n] = ""
 		}
 
 		handler.ServeHTTP(w, r)
@@ -584,7 +585,7 @@ func (rg *routerGroup) MethodNotAllowed(handler http.HandlerFunc) {
 }
 
 // Routes returns a slice of routing information from the tree,
-// useful for traversing available routes of a router.
+// useful for traversing available Routes of a router.
 func (rg *routerGroup) Routes() []Route {
 	return rg.tree.routes()
 }
@@ -597,17 +598,17 @@ func (rg *routerGroup) Middlewares() Middlewares {
 // Match searches the routing tree for a handler that matches the method/path.
 // It's similar to routing a http request, but without executing the handler
 // thereafter.
-func (rg *routerGroup) Match(webCtx *Context, method, path string) bool {
+func (rg *routerGroup) Match(ctx *RouteContext, method, path string) bool {
 	m, ok := methodMap[method]
 	if !ok {
 		return false
 	}
 
-	node, _, h := rg.tree.FindRoute(webCtx, m, path)
+	node, _, h := rg.tree.FindRoute(ctx, m, path)
 
 	if node != nil && node.subroutes != nil {
-		webCtx.routePath = rg.nextRoutePath(webCtx)
-		return node.subroutes.Match(webCtx, method, webCtx.routePath)
+		ctx.RoutePath = rg.nextRoutePath(ctx)
+		return node.subroutes.Match(ctx, method, ctx.RoutePath)
 	}
 
 	return h != nil

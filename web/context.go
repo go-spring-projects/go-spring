@@ -54,33 +54,9 @@ type Context struct {
 	// or to be sent by a client.
 	Request *http.Request
 
-	routes Routes
-
 	// SameSite allows a server to define a cookie attribute making it impossible for
 	// the browser to send this cookie along with cross-site requests.
 	sameSite http.SameSite
-
-	// URLParams are the stack of routeParams captured during the
-	// routing lifecycle across a stack of sub-routers.
-	urlParams RouteParams
-
-	// routeParams matched for the current sub-router. It is
-	// intentionally unexported so it can't be tampered.
-	routeParams RouteParams
-
-	// Routing path/method override used during the route search.
-	routePath   string
-	routeMethod string
-
-	// The endpoint routing pattern that matched the request URI path
-	// or `RoutePath` of the current sub-router. This value will update
-	// during the lifecycle of a request passing through a stack of
-	// sub-routers.
-	routePattern  string
-	routePatterns []string
-
-	methodNotAllowed bool
-	methodsAllowed   []methodTyp
 }
 
 // Context returns the request's context.
@@ -116,7 +92,10 @@ func (c *Context) Cookie(name string) (string, bool) {
 
 // PathParam returns the named variables in the request.
 func (c *Context) PathParam(name string) (string, bool) {
-	return c.urlParams.Get(name)
+	if ctx := FromRouteContext(c.Request.Context()); nil != ctx {
+		return ctx.URLParams.Get(name)
+	}
+	return "", false
 }
 
 // QueryParam returns the named query in the request.
@@ -315,18 +294,53 @@ func (c *Context) ClientIP() string {
 	return remoteIP.String()
 }
 
+type routeContextKey struct{}
+
+func WithRouteContext(parent context.Context, ctx *RouteContext) context.Context {
+	return context.WithValue(parent, routeContextKey{}, ctx)
+}
+
+func FromRouteContext(ctx context.Context) *RouteContext {
+	if v := ctx.Value(routeContextKey{}); v != nil {
+		return v.(*RouteContext)
+	}
+	return nil
+}
+
+type RouteContext struct {
+	Routes Routes
+	// URLParams are the stack of routeParams captured during the
+	// routing lifecycle across a stack of sub-routers.
+	URLParams RouteParams
+
+	// routeParams matched for the current sub-router. It is
+	// intentionally unexported so it can't be tampered.
+	routeParams RouteParams
+
+	// Routing path/method override used during the route search.
+	RoutePath   string
+	RouteMethod string
+
+	// The endpoint routing pattern that matched the request URI path
+	// or `RoutePath` of the current sub-router. This value will update
+	// during the lifecycle of a request passing through a stack of
+	// sub-routers.
+	RoutePattern  string
+	routePatterns []string
+
+	methodNotAllowed bool
+	methodsAllowed   []methodTyp
+}
+
 // Reset context to initial state
-func (c *Context) Reset() {
-	c.Writer = nil
-	c.Request = nil
-	c.sameSite = 0
-	c.routes = nil
-	c.routePath = ""
-	c.routeMethod = ""
-	c.routePattern = ""
+func (c *RouteContext) Reset() {
+	c.Routes = nil
+	c.RoutePath = ""
+	c.RouteMethod = ""
+	c.RoutePattern = ""
 	c.routePatterns = c.routePatterns[:0]
-	c.urlParams.Keys = c.urlParams.Keys[:0]
-	c.urlParams.Values = c.urlParams.Values[:0]
+	c.URLParams.Keys = c.URLParams.Keys[:0]
+	c.URLParams.Values = c.URLParams.Values[:0]
 	c.routeParams.Keys = c.routeParams.Keys[:0]
 	c.routeParams.Values = c.routeParams.Values[:0]
 	c.methodNotAllowed = false
@@ -345,9 +359,9 @@ func (s *RouteParams) Add(key, value string) {
 }
 
 func (s *RouteParams) Get(key string) (value string, ok bool) {
-	for index, k := range s.Keys {
-		if key == k {
-			return s.Values[index], true
+	for i := len(s.Keys) - 1; i >= 0; i-- {
+		if s.Keys[i] == key {
+			return s.Values[i], true
 		}
 	}
 	return "", false

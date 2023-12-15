@@ -349,9 +349,9 @@ func (n *node) setEndpoint(method methodTyp, handler http.Handler, pattern strin
 	}
 }
 
-func (n *node) FindRoute(rctx *Context, method methodTyp, path string) (*node, endpoints, http.Handler) {
+func (n *node) FindRoute(rctx *RouteContext, method methodTyp, path string) (*node, endpoints, http.Handler) {
 	// Reset the context routing pattern and params
-	rctx.routePattern = ""
+	rctx.RoutePattern = ""
 	rctx.routeParams.Keys = rctx.routeParams.Keys[:0]
 	rctx.routeParams.Values = rctx.routeParams.Values[:0]
 
@@ -362,13 +362,13 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) (*node, e
 	}
 
 	// Record the routing params in the request lifecycle
-	rctx.urlParams.Keys = append(rctx.urlParams.Keys, rctx.routeParams.Keys...)
-	rctx.urlParams.Values = append(rctx.urlParams.Values, rctx.routeParams.Values...)
+	rctx.URLParams.Keys = append(rctx.URLParams.Keys, rctx.routeParams.Keys...)
+	rctx.URLParams.Values = append(rctx.URLParams.Values, rctx.routeParams.Values...)
 
 	// Record the routing pattern in the request lifecycle
 	if rn.endpoints[method].pattern != "" {
-		rctx.routePattern = rn.endpoints[method].pattern
-		rctx.routePatterns = append(rctx.routePatterns, rctx.routePattern)
+		rctx.RoutePattern = rn.endpoints[method].pattern
+		rctx.routePatterns = append(rctx.routePatterns, rctx.RoutePattern)
 	}
 
 	return rn, rn.endpoints, rn.endpoints[method].handler
@@ -376,7 +376,7 @@ func (n *node) FindRoute(rctx *Context, method methodTyp, path string) (*node, e
 
 // Recursive edge traversal by checking all nodeTyp groups along the way.
 // It's like searching through a multi-dimensional radix trie.
-func (n *node) findRoute(rctx *Context, method methodTyp, path string) *node {
+func (n *node) findRoute(rctx *RouteContext, method methodTyp, path string) *node {
 	nn := n
 	search := path
 
