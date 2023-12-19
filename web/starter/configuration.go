@@ -23,14 +23,18 @@ import (
 	"log/slog"
 	"net/http"
 
+	"go-spring.dev/spring/conf"
 	"go-spring.dev/spring/gs"
 	"go-spring.dev/spring/gs/cond"
-	"go-spring.dev/spring/web"
+	"go-spring.dev/web"
+	"go-spring.dev/web/binding"
 )
 
 func init() {
 	gs.Configuration(new(serverConfiguration)).
 		On(cond.OnProperty("http.addr"))
+
+	binding.RegisterValidator(conf.ValidateStruct)
 }
 
 type serverConfiguration struct {
@@ -58,6 +62,14 @@ func (sc *serverConfiguration) OnAppStop(ctx context.Context) {
 	}
 }
 
+func (sc *serverConfiguration) NewRouter() *gs.BeanDefinition {
+	return gs.NewBean(web.NewRouter).Primary()
+}
+
 func (sc *serverConfiguration) NewServer() *gs.BeanDefinition {
-	return gs.NewBean(web.NewServer, "${http}").Primary()
+	return gs.NewBean(
+		func(router web.Router, options web.Options) *web.Server {
+			options.Router = router
+			return web.NewServer(options)
+		}, "", "${http}").Primary()
 }
