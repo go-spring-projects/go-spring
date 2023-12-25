@@ -179,18 +179,19 @@ type PtrStruct struct {
 }
 
 type CommonStruct struct {
-	Int      int           `value:"${int}"`
-	Ints     []int         `value:"${ints}"`
-	Uint     uint          `value:"${uint:=3}"`
-	Uints    []uint        `value:"${uints:=1,2,3}"`
-	Float    float64       `value:"${float:=3}"`
-	Floats   []float64     `value:"${floats:=1,2,3}"`
-	Bool     bool          `value:"${bool:=true}"`
-	Bools    []bool        `value:"${bools:=true,false}"`
-	String   string        `value:"${string:=abc}"`
-	Strings  []string      `value:"${strings:=abc,def,ghi}"`
-	Time     time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
-	Duration time.Duration `value:"${duration:=5s}"`
+	Int       int           `value:"${int}"`
+	Ints      []int         `value:"${ints}"`
+	Uint      uint          `value:"${uint:=3}"`
+	Uints     []uint        `value:"${uints:=1,2,3}"`
+	Float     float64       `value:"${float:=3}"`
+	Floats    []float64     `value:"${floats:=1,2,3}"`
+	Bool      bool          `value:"${bool:=true}"`
+	Bools     []bool        `value:"${bools:=true,false}"`
+	String    string        `value:"${string:=abc}"`
+	Strings   []string      `value:"${strings:=abc,def,ghi}"`
+	Time      time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
+	Duration  time.Duration `value:"${duration:=5s}"`
+	dontWired string
 }
 
 type NestedStruct struct {
@@ -402,70 +403,79 @@ func TestBind_SingleValue(t *testing.T) {
 				"int":  1,
 				"ints": []int{1, 2, 3},
 				"nested": map[string]interface{}{
-					"int":  1,
-					"ints": "1,2,3",
+					"int":       1,
+					"ints":      "1,2,3",
+					"dontWired": "123456789",
 				},
+				"dontWired": "987654321",
 			},
 		})).Bind(&s, tag)
 		assert.Error(t, err, "bind NestedStruct error: bind NestedStruct.Struct error: bind NestedStruct.Struct.Int error: property \"struct.Struct.int\": not exist")
+		assert.Equal(t, s.dontWired, "")
+		assert.Equal(t, s.Struct.dontWired, "")
 
 		m := map[string]interface{}{
 			"struct": map[string]interface{}{
 				"int":  1,
 				"ints": []int{1, 2, 3},
 				"nested": map[string]interface{}{
-					"int":  1,
-					"ints": "1,2,3",
+					"int":       1,
+					"ints":      "1,2,3",
+					"dontWired": "123456789",
 				},
 				"Struct": map[string]interface{}{
 					"int":  1,
 					"ints": "1,2,3",
 				},
+				"dontWired": "987654321",
 			},
 		}
 
 		expect := NestedStruct{
 			CommonStruct: CommonStruct{
-				Int:      1,
-				Ints:     []int{1, 2, 3},
-				Uint:     uint(3),
-				Uints:    []uint{1, 2, 3},
-				Float:    float64(3),
-				Floats:   []float64{1, 2, 3},
-				Bool:     true,
-				Bools:    []bool{true, false},
-				String:   "abc",
-				Strings:  []string{"abc", "def", "ghi"},
-				Time:     time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
-				Duration: 5 * time.Second,
+				Int:       1,
+				Ints:      []int{1, 2, 3},
+				Uint:      uint(3),
+				Uints:     []uint{1, 2, 3},
+				Float:     float64(3),
+				Floats:    []float64{1, 2, 3},
+				Bool:      true,
+				Bools:     []bool{true, false},
+				String:    "abc",
+				Strings:   []string{"abc", "def", "ghi"},
+				Time:      time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
+				Duration:  5 * time.Second,
+				dontWired: "",
 			},
 			Struct: CommonStruct{
-				Int:      1,
-				Ints:     []int{1, 2, 3},
-				Uint:     uint(3),
-				Uints:    []uint{1, 2, 3},
-				Float:    float64(3),
-				Floats:   []float64{1, 2, 3},
-				Bool:     true,
-				Bools:    []bool{true, false},
-				String:   "abc",
-				Strings:  []string{"abc", "def", "ghi"},
-				Time:     time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
-				Duration: 5 * time.Second,
+				Int:       1,
+				Ints:      []int{1, 2, 3},
+				Uint:      uint(3),
+				Uints:     []uint{1, 2, 3},
+				Float:     float64(3),
+				Floats:    []float64{1, 2, 3},
+				Bool:      true,
+				Bools:     []bool{true, false},
+				String:    "abc",
+				Strings:   []string{"abc", "def", "ghi"},
+				Time:      time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
+				Duration:  5 * time.Second,
+				dontWired: "",
 			},
 			Nested: CommonStruct{
-				Int:      1,
-				Ints:     []int{1, 2, 3},
-				Uint:     uint(3),
-				Uints:    []uint{1, 2, 3},
-				Float:    float64(3),
-				Floats:   []float64{1, 2, 3},
-				Bool:     true,
-				Bools:    []bool{true, false},
-				String:   "abc",
-				Strings:  []string{"abc", "def", "ghi"},
-				Time:     time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
-				Duration: 5 * time.Second,
+				Int:       1,
+				Ints:      []int{1, 2, 3},
+				Uint:      uint(3),
+				Uints:     []uint{1, 2, 3},
+				Float:     float64(3),
+				Floats:    []float64{1, 2, 3},
+				Bool:      true,
+				Bools:     []bool{true, false},
+				String:    "abc",
+				Strings:   []string{"abc", "def", "ghi"},
+				Time:      time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
+				Duration:  5 * time.Second,
+				dontWired: "",
 			},
 			Int:      1,
 			Ints:     []int{1, 2, 3},

@@ -403,6 +403,9 @@ func bindStruct(p *Properties, v reflect.Value, t reflect.Type, param BindParam,
 		}
 
 		if utils.IsValueType(ft.Type) {
+			if ft.Type.Kind() != reflect.Struct {
+				continue
+			}
 			if subParam.Key == "" {
 				subParam.Key = ft.Name
 			} else {
