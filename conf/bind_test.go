@@ -179,18 +179,19 @@ type PtrStruct struct {
 }
 
 type CommonStruct struct {
-	Int      int           `value:"${int}"`
-	Ints     []int         `value:"${ints}"`
-	Uint     uint          `value:"${uint:=3}"`
-	Uints    []uint        `value:"${uints:=1,2,3}"`
-	Float    float64       `value:"${float:=3}"`
-	Floats   []float64     `value:"${floats:=1,2,3}"`
-	Bool     bool          `value:"${bool:=true}"`
-	Bools    []bool        `value:"${bools:=true,false}"`
-	String   string        `value:"${string:=abc}"`
-	Strings  []string      `value:"${strings:=abc,def,ghi}"`
-	Time     time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
-	Duration time.Duration `value:"${duration:=5s}"`
+	Int       int           `value:"${int}"`
+	Ints      []int         `value:"${ints}"`
+	Uint      uint          `value:"${uint:=3}"`
+	Uints     []uint        `value:"${uints:=1,2,3}"`
+	Float     float64       `value:"${float:=3}"`
+	Floats    []float64     `value:"${floats:=1,2,3}"`
+	Bool      bool          `value:"${bool:=true}"`
+	Bools     []bool        `value:"${bools:=true,false}"`
+	String    string        `value:"${string:=abc}"`
+	Strings   []string      `value:"${strings:=abc,def,ghi}"`
+	Time      time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
+	Duration  time.Duration `value:"${duration:=5s}"`
+	dontWired string
 }
 
 type NestedStruct struct {
