@@ -179,38 +179,48 @@ type PtrStruct struct {
 }
 
 type CommonStruct struct {
-	Int       int           `value:"${int}"`
-	Ints      []int         `value:"${ints}"`
-	Uint      uint          `value:"${uint:=3}"`
-	Uints     []uint        `value:"${uints:=1,2,3}"`
-	Float     float64       `value:"${float:=3}"`
-	Floats    []float64     `value:"${floats:=1,2,3}"`
-	Bool      bool          `value:"${bool:=true}"`
-	Bools     []bool        `value:"${bools:=true,false}"`
-	String    string        `value:"${string:=abc}"`
-	Strings   []string      `value:"${strings:=abc,def,ghi}"`
-	Time      time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
-	Duration  time.Duration `value:"${duration:=5s}"`
-	dontWired string
+	Int           int           `value:"${int}"`
+	Ints          []int         `value:"${ints}"`
+	Uint          uint          `value:"${uint:=3}"`
+	Uints         []uint        `value:"${uints:=1,2,3}"`
+	Float         float64       `value:"${float:=3}"`
+	Floats        []float64     `value:"${floats:=1,2,3}"`
+	Bool          bool          `value:"${bool:=true}"`
+	Bools         []bool        `value:"${bools:=true,false}"`
+	String        string        `value:"${string:=abc}"`
+	Strings       []string      `value:"${strings:=abc,def,ghi}"`
+	Time          time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
+	Duration      time.Duration `value:"${duration:=5s}"`
+	dontWired     string
+	dontWiredTime time.Time `value:"-"`
+}
+
+type FightExpansion struct {
+	Round     int32   `value:"${round}" json:"round" validate:"min=1"`
+	StartTime string  `value:"${start-time}" json:"start_time"`
+	StopTime  string  `value:"${stop-time}" json:"stop_time"`
+	Min       float64 `value:"${min}" json:"min" validate:"nonzero"`
+	Max       float64 `value:"${max}" json:"max" validate:"nonzero"`
 }
 
 type NestedStruct struct {
 	*PtrStruct
 	CommonStruct
-	Struct   CommonStruct
-	Nested   CommonStruct  `value:"${nested}"`
-	Int      int           `value:"${int}"`
-	Ints     []int         `value:"${ints}"`
-	Uint     uint          `value:"${uint:=3}"`
-	Uints    []uint        `value:"${uints:=1,2,3}"`
-	Float    float64       `value:"${float:=3}"`
-	Floats   []float64     `value:"${floats:=1,2,3}"`
-	Bool     bool          `value:"${bool:=true}"`
-	Bools    []bool        `value:"${bools:=true,false}"`
-	String   string        `value:"${string:=abc}"`
-	Strings  []string      `value:"${strings:=abc,def,ghi}"`
-	Time     time.Time     `value:"${time:=2017-06-17 13:20:15 UTC}"`
-	Duration time.Duration `value:"${duration:=5s}"`
+	Struct          CommonStruct
+	Nested          CommonStruct     `value:"${nested}"`
+	Int             int              `value:"${int}"`
+	Ints            []int            `value:"${ints}"`
+	Uint            uint             `value:"${uint:=3}"`
+	Uints           []uint           `value:"${uints:=1,2,3}"`
+	Float           float64          `value:"${float:=3}"`
+	Floats          []float64        `value:"${floats:=1,2,3}"`
+	Bool            bool             `value:"${bool:=true}"`
+	Bools           []bool           `value:"${bools:=true,false}"`
+	String          string           `value:"${string:=abc}"`
+	Strings         []string         `value:"${strings:=abc,def,ghi}"`
+	Time            time.Time        `value:"${time:=2017-06-17 13:20:15 UTC}"`
+	Duration        time.Duration    `value:"${duration:=5s}"`
+	FightExpansions []FightExpansion `value:"${fight-expansions:=}"`
 }
 
 func TestBind_InvalidValue(t *testing.T) {
@@ -403,79 +413,93 @@ func TestBind_SingleValue(t *testing.T) {
 				"int":  1,
 				"ints": []int{1, 2, 3},
 				"nested": map[string]interface{}{
-					"int":       1,
-					"ints":      "1,2,3",
-					"dontWired": "123456789",
+					"int":           1,
+					"ints":          "1,2,3",
+					"dontWired":     "123456789",
+					"dontWiredTime": "Mon May  6 23:31:43 EDT 2024",
 				},
-				"dontWired": "987654321",
+				"dontWired":     "987654321",
+				"dontWiredTime": "Mon May  6 23:31:43 EDT 2024",
 			},
 		})).Bind(&s, tag)
 		assert.Error(t, err, "bind NestedStruct error: bind NestedStruct.Struct error: bind NestedStruct.Struct.Int error: property \"struct.Struct.int\": not exist")
 		assert.Equal(t, s.dontWired, "")
+		assert.Equal(t, s.dontWiredTime, time.Time{})
 		assert.Equal(t, s.Struct.dontWired, "")
+		assert.Equal(t, s.Struct.dontWiredTime, time.Time{})
 
 		m := map[string]interface{}{
 			"struct": map[string]interface{}{
 				"int":  1,
 				"ints": []int{1, 2, 3},
 				"nested": map[string]interface{}{
-					"int":       1,
-					"ints":      "1,2,3",
-					"dontWired": "123456789",
+					"int":           1,
+					"ints":          "1,2,3",
+					"dontWired":     "123456789",
+					"dontWiredTime": "Mon May  6 23:31:43 EDT 2024",
 				},
 				"Struct": map[string]interface{}{
 					"int":  1,
 					"ints": "1,2,3",
 				},
-				"dontWired": "987654321",
+				"dontWired":     "987654321",
+				"dontWiredTime": "Mon May  6 23:31:43 EDT 2024",
+				"fight-expansions": []map[string]interface{}{
+					{"round": 1, "start-time": "09:00:00", "stop-time": "12:00:00", "min": 10, "max": 100},
+					{"round": 2, "start-time": "10:00:00", "stop-time": "13:00:00", "min": 20, "max": 200},
+					{"round": 3, "start-time": "11:00:00", "stop-time": "14:00:00", "min": 30, "max": 300},
+				},
 			},
 		}
 
 		expect := NestedStruct{
 			CommonStruct: CommonStruct{
-				Int:       1,
-				Ints:      []int{1, 2, 3},
-				Uint:      uint(3),
-				Uints:     []uint{1, 2, 3},
-				Float:     float64(3),
-				Floats:    []float64{1, 2, 3},
-				Bool:      true,
-				Bools:     []bool{true, false},
-				String:    "abc",
-				Strings:   []string{"abc", "def", "ghi"},
-				Time:      time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
-				Duration:  5 * time.Second,
-				dontWired: "",
+				Int:           1,
+				Ints:          []int{1, 2, 3},
+				Uint:          uint(3),
+				Uints:         []uint{1, 2, 3},
+				Float:         float64(3),
+				Floats:        []float64{1, 2, 3},
+				Bool:          true,
+				Bools:         []bool{true, false},
+				String:        "abc",
+				Strings:       []string{"abc", "def", "ghi"},
+				Time:          time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
+				Duration:      5 * time.Second,
+				dontWired:     "",
+				dontWiredTime: time.Time{},
 			},
 			Struct: CommonStruct{
-				Int:       1,
-				Ints:      []int{1, 2, 3},
-				Uint:      uint(3),
-				Uints:     []uint{1, 2, 3},
-				Float:     float64(3),
-				Floats:    []float64{1, 2, 3},
-				Bool:      true,
-				Bools:     []bool{true, false},
-				String:    "abc",
-				Strings:   []string{"abc", "def", "ghi"},
-				Time:      time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
-				Duration:  5 * time.Second,
-				dontWired: "",
+				Int:           1,
+				Ints:          []int{1, 2, 3},
+				Uint:          uint(3),
+				Uints:         []uint{1, 2, 3},
+				Float:         float64(3),
+				Floats:        []float64{1, 2, 3},
+				Bool:          true,
+				Bools:         []bool{true, false},
+				String:        "abc",
+				Strings:       []string{"abc", "def", "ghi"},
+				Time:          time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
+				Duration:      5 * time.Second,
+				dontWired:     "",
+				dontWiredTime: time.Time{},
 			},
 			Nested: CommonStruct{
-				Int:       1,
-				Ints:      []int{1, 2, 3},
-				Uint:      uint(3),
-				Uints:     []uint{1, 2, 3},
-				Float:     float64(3),
-				Floats:    []float64{1, 2, 3},
-				Bool:      true,
-				Bools:     []bool{true, false},
-				String:    "abc",
-				Strings:   []string{"abc", "def", "ghi"},
-				Time:      time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
-				Duration:  5 * time.Second,
-				dontWired: "",
+				Int:           1,
+				Ints:          []int{1, 2, 3},
+				Uint:          uint(3),
+				Uints:         []uint{1, 2, 3},
+				Float:         float64(3),
+				Floats:        []float64{1, 2, 3},
+				Bool:          true,
+				Bools:         []bool{true, false},
+				String:        "abc",
+				Strings:       []string{"abc", "def", "ghi"},
+				Time:          time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
+				Duration:      5 * time.Second,
+				dontWired:     "",
+				dontWiredTime: time.Time{},
 			},
 			Int:      1,
 			Ints:     []int{1, 2, 3},
@@ -489,6 +513,11 @@ func TestBind_SingleValue(t *testing.T) {
 			Strings:  []string{"abc", "def", "ghi"},
 			Time:     time.Date(2017, 6, 17, 13, 20, 15, 0, time.UTC),
 			Duration: 5 * time.Second,
+			FightExpansions: []FightExpansion{
+				{Round: 1, StartTime: "09:00:00", StopTime: "12:00:00", Min: 10, Max: 100},
+				{Round: 2, StartTime: "10:00:00", StopTime: "13:00:00", Min: 20, Max: 200},
+				{Round: 3, StartTime: "11:00:00", StopTime: "14:00:00", Min: 30, Max: 300},
+			},
 		}
 
 		tag = Tag("${struct:=}")

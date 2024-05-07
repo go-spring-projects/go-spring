@@ -864,6 +864,11 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 		}
 
 		if tag, ok = ft.Tag.Lookup("value"); ok {
+			// ignore this field
+			if "-" == tag {
+				continue
+			}
+
 			err := subParam.BindTag(tag, ft.Tag)
 			if err != nil {
 				return err

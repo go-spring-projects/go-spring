@@ -238,9 +238,7 @@ func bindSlice(p *Properties, v reflect.Value, t reflect.Type, param BindParam, 
 
 		e := reflect.New(et).Elem()
 		err = BindValue(p, e, et, subParam, filter)
-		if errors.Is(err, errNotExist) {
-			break
-		}
+
 		if err != nil {
 			return fmt.Errorf("bind %s error: %w", param.Path, err)
 		}
@@ -373,6 +371,11 @@ func bindStruct(p *Properties, v reflect.Value, t reflect.Type, param BindParam,
 		}
 
 		if tag, ok := ft.Tag.Lookup("value"); ok {
+			// ignore this field
+			if "-" == tag {
+				continue
+			}
+
 			if err := subParam.BindTag(tag, ft.Tag); err != nil {
 				return fmt.Errorf("bind %s error: %w", param.Path, err)
 			}
