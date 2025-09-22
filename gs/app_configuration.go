@@ -57,7 +57,9 @@ func (e *AppConfiguration) Load(props *conf.Properties) error {
 
 	// 从环境变量和参数获取的配置优先级更高
 	for _, k := range p.Keys() {
-		props.Set(k, p.Get(k))
+		if err := props.Set(k, p.Get(k)); nil != err {
+			return err
+		}
 	}
 	return nil
 }

@@ -54,14 +54,28 @@ var (
 
 type BeanSelector = utils.BeanSelector
 
+// Container provides interfaces for registering properties and beans before the IoC container starts up.
 type Container interface {
+	// Context return context of IoC container.
 	Context() context.Context
+	// OnProperty binding a callback when the property key loaded.
+	OnProperty(key string, fn interface{}) error
+	// Property sets the value of the property corresponding to the key. If the property value for the key already exists, the Set method will overwrite the old value.
+	// In addition to supporting string type property values, the Set method also supports other primitive data types such as int, uint, bool, and so on for property values.
+	Property(key string, value interface{}) error
+	// Properties return properties of IoC container.
 	Properties() *dync.Properties
+	// AllowCircularReferences enable circular-references.
 	AllowCircularReferences()
+	// Object register object bean to Ioc container.
 	Object(i interface{}) *BeanDefinition
+	// Provide register method bean to Ioc container.
 	Provide(ctor interface{}, args ...arg.Arg) *BeanDefinition
+	// Configuration scan that the object `i` has `NewXXX` methods to Ioc container.
 	Configuration(i interface{}) *BeanDefinition
+	// Refresh the container's beans, perform validity checks on beans, and complete property binding and dependency injection.
 	Refresh() error
+	// Close clos Ioc container.
 	Close()
 }
 
@@ -100,6 +114,8 @@ type tempContainer struct {
 	mapOfOnProperty map[string]interface{}
 }
 
+var _ Context = (*container)(nil)
+
 // The container is the cornerstone of the go-spring framework, implementing the concept of dependency injection mentioned in
 // Martin Fowler's article "Inversion of Control Containers and the Dependency Injection pattern."
 // However, the original article only refers to dependency injection as the handling of dependencies between objects,
@@ -118,20 +134,25 @@ type container struct {
 	dependencies            []*BeanDefinition
 	state                   refreshState
 	wg                      sync.WaitGroup
-	p                       *dync.Properties
+	properties              *dync.Properties
 	contextAware            bool
 	allowCircularReferences bool
 }
 
 // New make a IoC container.
 func New() Container {
+	return NewContainer(conf.New())
+}
+
+// NewContainer make a IoC container with Properties.
+func NewContainer(props *conf.Properties) Container {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &container{
-		ctx:    ctx,
-		cancel: cancel,
-		p:      dync.New(),
+		ctx:        ctx,
+		cancel:     cancel,
+		properties: dync.New(),
 		tempContainer: &tempContainer{
-			props:           conf.New(),
+			props:           props,
 			beansByName:     make(map[string][]*BeanDefinition),
 			beansByType:     make(map[reflect.Type][]*BeanDefinition),
 			mapOfOnProperty: make(map[string]interface{}),
@@ -146,7 +167,7 @@ func (c *container) Context() context.Context {
 
 // Properties return properties of IoC container.
 func (c *container) Properties() *dync.Properties {
-	return c.p
+	return c.properties
 }
 
 func validOnProperty(fn interface{}) error {
@@ -161,16 +182,24 @@ func validOnProperty(fn interface{}) error {
 }
 
 // OnProperty binding a callback when the property key loaded.
-func (c *container) OnProperty(key string, fn interface{}) {
-	err := validOnProperty(fn)
-	utils.Panic(err).When(err != nil)
+func (c *container) OnProperty(key string, fn interface{}) error {
+	if c.state >= Refreshing {
+		return errors.New("should call before Refresh")
+	}
+	if err := validOnProperty(fn); nil != err {
+		return err
+	}
 	c.mapOfOnProperty[key] = fn
+	return nil
 }
 
 // Property sets the value of the property corresponding to the key. If the property value for the key already exists, the Set method will overwrite the old value.
 // In addition to supporting string type property values, the Set method also supports other primitive data types such as int, uint, bool, and so on for property values.
-func (c *container) Property(key string, value interface{}) {
-	c.props.Set(key, value)
+func (c *container) Property(key string, value interface{}) error {
+	if c.state >= Refreshing {
+		return errors.New("should call before Refresh")
+	}
+	return c.props.Set(key, value)
 }
 
 // Accept register bean to Ioc container.
@@ -367,14 +396,14 @@ func (c *container) clear() {
 }
 
 // Refresh the container's beans, perform validity checks on beans, and complete property binding and dependency injection.
-func (c *container) Refresh() error {
-	return c.refresh(true)
-}
-
-func (c *container) refresh(autoClear bool) (err error) {
+func (c *container) Refresh() (err error) {
 
 	if c.state != Unrefreshed {
 		return errors.New("container already refreshed")
+	}
+
+	if err = c.properties.Refresh(c.props); nil != err {
+		return err
 	}
 
 	start := time.Now()
@@ -385,7 +414,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 	for key, f := range c.mapOfOnProperty {
 		t := reflect.TypeOf(f)
 		in := reflect.New(t.In(0)).Elem()
-		if err = c.p.Bind(in, conf.Key(key)); err != nil {
+		if err = c.properties.Bind(in, conf.Key(key)); err != nil {
 			return err
 		}
 		reflect.ValueOf(f).Call([]reflect.Value{in})
@@ -458,7 +487,7 @@ func (c *container) refresh(autoClear bool) (err error) {
 	cost := time.Now().Sub(start)
 	c.logger.Info(fmt.Sprintf("refresh %d beans cost %v", len(beansById), cost))
 
-	if autoClear && !c.contextAware {
+	if !c.contextAware {
 		c.clear()
 	}
 
@@ -726,7 +755,7 @@ func (a *argContext) Matches(c cond.Condition) (bool, error) {
 }
 
 func (a *argContext) Bind(v reflect.Value, tag string) error {
-	return a.c.p.Bind(v, conf.Tag(tag))
+	return a.c.properties.Bind(v, conf.Tag(tag))
 }
 
 func (a *argContext) Wire(v reflect.Value, tag string) error {
@@ -817,7 +846,7 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 
 			// tag 预处理，可能通过属性值进行指定。
 			if strings.HasPrefix(tag, "${") {
-				s, err := c.p.Resolve(tag)
+				s, err := c.properties.Resolve(tag)
 				if nil != err {
 					return fmt.Errorf("field %s failed resolve logger name: %w", fieldPath, err)
 				}
@@ -879,7 +908,7 @@ func (c *container) wireStruct(v reflect.Value, t reflect.Type, param conf.BindP
 					return err
 				}
 			} else {
-				err = c.p.BindValue(fv.Addr(), subParam)
+				err = c.properties.BindValue(fv.Addr(), subParam)
 				if err != nil {
 					return err
 				}
@@ -901,7 +930,7 @@ func (c *container) wireByTag(v reflect.Value, tag string, stack *wiringStack) e
 
 	// tag 预处理，可能通过属性值进行指定。
 	if strings.HasPrefix(tag, "${") {
-		s, err := c.p.Resolve(tag)
+		s, err := c.properties.Resolve(tag)
 		if err != nil {
 			return err
 		}

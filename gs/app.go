@@ -39,14 +39,17 @@ type AppEvent interface {
 
 // App Ioc App
 type App struct {
+	props     *conf.Properties
 	container *container
 	exitChan  chan struct{}
 }
 
 // NewApp make a new App
 func NewApp() *App {
+	props := conf.New()
 	return &App{
-		container: New().(*container),
+		props:     props,
+		container: NewContainer(props).(*container),
 		exitChan:  make(chan struct{}),
 	}
 }
@@ -63,26 +66,23 @@ func (app *App) Run(resourceLocator ...ResourceLocator) error {
 
 func (app *App) run(resourceLocator ResourceLocator) error {
 
-	e := NewAppConfiguration(resourceLocator)
-
-	if err := e.Load(app.container.props); nil != err {
+	// load resource configuration.
+	if err := NewAppConfiguration(resourceLocator).Load(app.props); nil != err {
 		return err
 	}
 
-	if showBanner, _ := strconv.ParseBool(app.container.props.Get("spring.config.banner", conf.Def("true"))); showBanner {
-		app.printBanner(app.getBanner(app.container.props))
-	}
+	// print spring banner in console.
+	app.printBanner(app.props)
 
-	if err := app.container.p.Refresh(app.container.props); nil != err {
-		return err
-	}
-
-	if err := app.container.refresh(true); err != nil {
+	// Refresh the container's beans.
+	if err := app.container.Refresh(); err != nil {
+		app.container.Close()
 		return err
 	}
 
 	var logger = GetLogger()
 
+	// post OnAppStart event.
 	app.onAppStart(app.container)
 
 	logger.Info("application started successfully")
@@ -92,13 +92,15 @@ func (app *App) run(resourceLocator ResourceLocator) error {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		sig := <-ch
-		app.Shutdown(fmt.Sprintf("signal %v", sig))
+		app.Shutdown("received signal: " + sig.String())
 	}()
 
 	<-app.exitChan
 
+	// post OnAppStop event.
 	app.onAppStop(app.container)
 
+	// close container.
 	app.container.Close()
 
 	logger.Info("application exited")
@@ -158,8 +160,12 @@ func (app *App) getBanner(p *conf.Properties) string {
 }
 
 // printBanner print banner to console.
-func (app *App) printBanner(banner string) {
-	fmt.Println(banner)
+func (app *App) printBanner(p *conf.Properties) {
+	if showBanner, _ := strconv.ParseBool(p.Get("spring.config.banner", conf.Def("true"))); showBanner {
+		if banner := app.getBanner(p); len(banner) > 0 {
+			fmt.Println(banner)
+		}
+	}
 }
 
 // Shutdown close application.
@@ -180,8 +186,8 @@ func (app *App) OnProperty(key string, fn interface{}) {
 }
 
 // Property set property key/value
-func (app *App) Property(key string, value interface{}) {
-	app.container.Property(key, value)
+func (app *App) Property(key string, value interface{}) error {
+	return app.container.Property(key, value)
 }
 
 // Accept register bean to Ioc container.

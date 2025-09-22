@@ -27,23 +27,23 @@ import (
 )
 
 func (c *container) Keys() []string {
-	return c.p.Keys()
+	return c.properties.Keys()
 }
 
 func (c *container) Has(key string) bool {
-	return c.p.Has(key)
+	return c.properties.Has(key)
 }
 
 func (c *container) Prop(key string, opts ...conf.GetOption) string {
-	return c.p.Get(key, opts...)
+	return c.properties.Get(key, opts...)
 }
 
 func (c *container) Resolve(s string) (string, error) {
-	return c.p.Resolve(s)
+	return c.properties.Resolve(s)
 }
 
 func (c *container) Bind(i interface{}, args ...conf.BindArg) error {
-	return c.p.Bind(i, args...)
+	return c.properties.Bind(i, args...)
 }
 
 // Find the bean objects that meet the specified conditions. Note that this function can only guarantee that the returned beans are valid, i.e.,
