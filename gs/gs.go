@@ -453,6 +453,8 @@ func (c *container) Refresh() (err error) {
 	stack := newWiringStack(c.logger)
 
 	defer func() {
+		c.dependencies = stack.dependencies
+
 		if err != nil || len(stack.beans) > 0 {
 			if nil != err {
 				err = fmt.Errorf("container refresh failed\n%s\n↳%w", stack.path(), err)
@@ -481,7 +483,6 @@ func (c *container) Refresh() (err error) {
 		}
 	}
 
-	c.dependencies = stack.dependencies
 	c.state = Refreshed
 
 	cost := time.Now().Sub(start)

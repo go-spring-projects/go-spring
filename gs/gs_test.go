@@ -3126,3 +3126,76 @@ func TestContextGetWire(t *testing.T) {
 	})
 
 }
+
+type beanA struct {
+	markInit    bool
+	markDestroy bool
+}
+
+func (b *beanA) OnInit(ctx context.Context) error {
+	b.markInit = true
+	return nil
+}
+
+func (b *beanA) OnDestroy() {
+	b.markDestroy = true
+}
+
+type beanB struct {
+	BeanA       *beanA `autowire:""`
+	markInit    bool
+	markDestroy bool
+}
+
+func (b *beanB) OnInit(ctx context.Context) error {
+	return errors.New("init failed")
+}
+
+func (b *beanB) OnDestroy() {
+	b.markDestroy = true
+}
+
+type beanC struct {
+	BeanB       *beanB `autowire:""`
+	markInit    bool
+	markDestroy bool
+}
+
+func (b *beanC) OnInit(ctx context.Context) error {
+	b.markInit = true
+	return nil
+}
+
+func (b *beanC) OnDestroy() {
+	b.markDestroy = true
+}
+
+func TestBeanDestroy(t *testing.T) {
+
+	c := New()
+	ba := c.Object(new(beanA)).Interface().(*beanA)
+	bb := c.Object(new(beanB)).Interface().(*beanB)
+	bc := c.Object(new(beanC)).Interface().(*beanC)
+
+	err := c.Refresh()
+	assert.NotNil(t, err)
+
+	assert.Equal(t, ba.markInit, true)
+	assert.Equal(t, bb.markInit, false)
+	assert.Equal(t, bc.markInit, false)
+
+	assert.Equal(t, ba.markDestroy, false)
+	assert.Equal(t, bb.markDestroy, false)
+	assert.Equal(t, bc.markDestroy, false)
+
+	c.Close()
+
+	assert.Equal(t, ba.markInit, true)
+	assert.Equal(t, bb.markInit, false)
+	assert.Equal(t, bc.markInit, false)
+
+	assert.Equal(t, ba.markDestroy, true)
+	assert.Equal(t, bb.markDestroy, false)
+	assert.Equal(t, bc.markDestroy, false)
+
+}
